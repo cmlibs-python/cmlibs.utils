@@ -66,22 +66,19 @@ def rotmx(quaternion):
     return mx
 
 
-def mxmult(mx, b):
-    raise NotImplementedError('Implement it if you want to use it!')
-    return []
-
-
 def mxconstantmult(m, c):
     '''
     Multiply components of matrix m by constant c
     '''
     return [mult(row_m, c) for row_m in m]
 
+
 def mxvectormult(m, v):
     '''
     Post multiply matrix m by vector v
     '''
     return [dot(row_m, v) for row_m in m]
+
 
 def vectormxmult(v, m):
     '''

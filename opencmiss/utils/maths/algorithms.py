@@ -16,6 +16,7 @@ def calculateLinePlaneIntersection(pt1, pt2, point_on_plane, plane_normal):
 
     return None
 
+
 def calculateExtents(values):
     """
     Calculate the maximum and minimum for each coordinate x, y, and z
