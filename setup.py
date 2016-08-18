@@ -13,13 +13,13 @@ def readfile(filename, split=False):
 
 readme = readfile("README.rst", split=True)[3:]  # skip title
 requires = readfile("requirements.txt", split=True)
-licence = readfile("LICENSE")
+software_licence = readfile("LICENSE")
 
 setup(
     name='opencmiss.utils',
     version='0.1.0',
     description='OpenCMISS Utilities for Python.',
-    long_description='\n'.join(readme) + licence,
+    long_description='\n'.join(readme) + software_licence,
     classifiers=[],
     author='Hugh Sorby',
     author_email='',
