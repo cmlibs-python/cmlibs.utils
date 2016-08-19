@@ -17,7 +17,7 @@ software_licence = readfile("LICENSE")
 
 setup(
     name='opencmiss.utils',
-    version='0.1.0',
+    version='0.1.1',
     description='OpenCMISS Utilities for Python.',
     long_description='\n'.join(readme) + software_licence,
     classifiers=[],
