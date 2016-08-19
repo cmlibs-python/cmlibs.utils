@@ -18,10 +18,10 @@ def extractImageCorners(directory, filename):
     """
     ds = dicom.read_file(os.path.join(directory, filename))
     pixel_spacing = ds.PixelSpacing
-    delta_i = float(0.1)
-    delta_j = float(0.1)
-    # delta_i = float(pixel_spacing[0])
-    # delta_j = float(pixel_spacing[1])
+    # delta_i = float(0.1)
+    # delta_j = float(0.1)
+    delta_i = float(pixel_spacing[0])
+    delta_j = float(pixel_spacing[1])
     orient = [float(iop) for iop in ds.ImageOrientationPatient]
     pos = [float(ipp) for ipp in ds.ImagePositionPatient]
     rows = ds.Rows
