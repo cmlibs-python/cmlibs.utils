@@ -1,8 +1,3 @@
-'''
-Created on Jun 23, 2015
-
-@author: hsorby
-'''
 from opencmiss.utils.maths.vectorops import sub, dot,\
     add, mult, cross, normalize
 
