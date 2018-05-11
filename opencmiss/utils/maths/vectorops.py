@@ -102,6 +102,28 @@ def mxmult(a, b):
     return [vectormxmult(row_a, b) for row_a in a]
 
 
+def vectormatrixmult(v, m):
+    '''
+    Premultiply matrix m by vector v
+    '''
+    rows = len(m)
+    if len(v) != rows:
+        raise ValueError('vectormatmult mismatched rows')
+    columns = len(m[0])
+    result = []
+    for c in range(0, columns):
+        result.append(sum(v[r]*m[r][c] for r in range(rows)))
+    return result
+
+
+def matrixmult(a, b):
+    '''
+    Multiply 2 matrices: first index is down row, second is across column.
+    Assumes sizes are compatible (
+    '''
+    return [vectormatrixmult(row_a, b) for row_a in a]
+
+
 def eulerToRotationMatrix3(euler_angles):
     '''
     From OpenCMISS-Zinc graphics_library.cpp
