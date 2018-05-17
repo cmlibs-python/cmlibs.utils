@@ -380,6 +380,33 @@ def createImageField(fieldmodule, image_filename):
     return image_field
 
 
+def createVolumeImageField(fieldmodule, image_filenames):
+    """
+    Create an image field using the given fieldmodule.  The image filename must exist and
+    be a known image type.
+
+    :param fieldmodule: The fieldmodule to create the field in.
+    :param image_filename: Image filename.
+    :return: The image field created.
+    """
+    image_field = fieldmodule.createFieldImage()
+    image_field.setName('image_field')
+    image_field.setFilterMode(image_field.FILTER_MODE_LINEAR)
+
+    # Create a stream information object that we can use to read the
+    # image file from disk
+    stream_information = image_field.createStreaminformationImage()
+
+    # We are reading in a file from the local disk so our resource is a file.
+    for image_filename in image_filenames:
+        stream_information.createStreamresourceFile(image_filename)
+
+    # Actually read in the image file into the image field.
+    image_field.read(stream_information)
+
+    return image_field
+
+
 def createMaterialUsingImageField(region, image_field, colour_mapping_type=None, image_range=None):
     """
     Use an image field in a material to create an OpenGL texture.  Returns the
