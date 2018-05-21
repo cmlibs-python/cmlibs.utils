@@ -172,3 +172,23 @@ def axisAngleToQuaternion(axis, angle):
 
 def axisAngleToRotationMatrix(axis, angle):
     pass
+
+
+def reshape(a, new_shape):
+    b = []
+    if isinstance(new_shape, tuple):
+        index = 0
+        for x in range(new_shape[0]):
+            row = []
+            for y in range(new_shape[1]):
+                row.append(a[index])
+                index += 1
+            b.append(row)
+    elif isinstance(new_shape, int):
+        flat_list = [item for sublist in a for item in sublist]
+        if 0 <= new_shape < len(flat_list):
+            b = flat_list[:new_shape]
+        else:
+            b = flat_list
+
+    return b
