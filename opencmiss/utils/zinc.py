@@ -354,17 +354,18 @@ def create2DFiniteElement(fieldmodule, finite_element_field, node_coordinate_set
     fieldmodule.defineAllFaces()
 
 
-def createImageField(fieldmodule, image_filename):
+def createImageField(fieldmodule, image_filename, field_name='image'):
     """
     Create an image field using the given fieldmodule.  The image filename must exist and
     be a known image type.
 
     :param fieldmodule: The fieldmodule to create the field in.
     :param image_filename: Image filename.
+    :param field_name: Optional name of the image field, defaults to 'image'.
     :return: The image field created.
     """
     image_field = fieldmodule.createFieldImage()
-    image_field.setName('image_field')
+    image_field.setName(field_name)
     image_field.setFilterMode(image_field.FILTER_MODE_LINEAR)
 
     # Create a stream information object that we can use to read the
@@ -380,17 +381,18 @@ def createImageField(fieldmodule, image_filename):
     return image_field
 
 
-def createVolumeImageField(fieldmodule, image_filenames):
+def createVolumeImageField(fieldmodule, image_filenames, field_name='volume_image'):
     """
     Create an image field using the given fieldmodule.  The image filename must exist and
     be a known image type.
 
     :param fieldmodule: The fieldmodule to create the field in.
-    :param image_filename: Image filename.
+    :param image_filenames: Image filename.
+    :param field_name: Optional name of the image field, defaults to 'volume_image'.
     :return: The image field created.
     """
     image_field = fieldmodule.createFieldImage()
-    image_field.setName('image_field')
+    image_field.setName(field_name)
     image_field.setFilterMode(image_field.FILTER_MODE_LINEAR)
 
     # Create a stream information object that we can use to read the
