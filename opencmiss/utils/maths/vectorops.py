@@ -3,6 +3,7 @@ A collection of functions that operate on python lists as if
 they were vectors.  A basic implementation to forgo the need
 to use numpy.
 """
+import sys
 from math import sqrt, cos, sin, fabs, atan2
 
 
@@ -122,6 +123,12 @@ def matrixmult(a, b):
     Assumes sizes are compatible (
     '''
     return [vectormatrixmult(row_a, b) for row_a in a]
+
+
+def transpose(a):
+    if sys.version_info < (3, 0):
+        return map(list, zip(*a))
+    return list(map(list, zip(*a)))
 
 
 def eulerToRotationMatrix3(euler_angles):
