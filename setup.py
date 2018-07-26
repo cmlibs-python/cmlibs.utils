@@ -11,13 +11,14 @@ def readfile(filename, split=False):
             return stream.read().split("\n")
         return stream.read()
 
+
 readme = readfile("README.rst", split=True)[3:]  # skip title
 requires = readfile("requirements.txt", split=True)
 software_licence = readfile("LICENSE")
 
 setup(
     name='opencmiss.utils',
-    version='0.1.1',
+    version='0.1.2',
     description='OpenCMISS Utilities for Python.',
     long_description='\n'.join(readme) + software_licence,
     classifiers=[],
