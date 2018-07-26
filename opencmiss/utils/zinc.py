@@ -10,26 +10,64 @@ from opencmiss.zinc.status import OK as ZINC_OK
 from opencmiss.utils.maths import vectorops
 
 
-def createFiniteElementField(region):
-    '''
+def createFiniteElementField(region, dimension=3, field_name='coordinates', managed=True, type_coordinate=True):
+    """
     Create a finite element field of three dimensions
     called 'coordinates' and set the coordinate type true.
-    '''
+
+    :param region: The region to create the finite  element field in.
+    :param dimension: The dimension of the finite element field to create, defaults to 3.
+    :param field_name: The name of the field, defaults to 'coordinates'.
+    :param managed: Is managed, True or False.  Defaults to True.
+    :param type_coordinate: Is type coordinate: True or False.  Defaults to True.
+    """
     fieldmodule = region.getFieldmodule()
     fieldmodule.beginChange()
 
     # Create a finite element field with 3 components to represent 3 dimensions
-    finite_element_field = fieldmodule.createFieldFiniteElement(3)
+    finite_element_field = fieldmodule.createFieldFiniteElement(dimension)
 
     # Set the name of the field
-    finite_element_field.setName('coordinates')
+    finite_element_field.setName(field_name)
     # Set the attribute is managed to 1 so the field module will manage the field for us
 
-    finite_element_field.setManaged(True)
-    finite_element_field.setTypeCoordinate(True)
+    finite_element_field.setManaged(managed)
+    finite_element_field.setTypeCoordinate(type_coordinate)
     fieldmodule.endChange()
 
     return finite_element_field
+
+
+def createNode(field_module, field_names, data_object, identifier=-1):
+    """
+    Create a Node in the field_module using the field_names and data_object.  Optionally use the identifier to
+    set the identifier of the Node created.
+
+    :param field_module: The field module that has at least the fields defined with names in field_names.
+    :param field_names: A list of field_names that can be found in the field_module.
+    :param data_object: The object that can supply the values for the field_names through the same named method.
+    :param identifier: Identifier to assign to the node. Default value is '-1'.
+    :return: The node identifier assigned to the created node.
+    """
+    # Find a special node set named 'nodes'
+    nodeset = field_module.findNodesetByName('nodes')
+    node_template = nodeset.createNodetemplate()
+
+    # Set the finite element coordinate field for the nodes to use
+    fields = []
+    for field_name in field_names:
+        fields.append(field_module.findFieldByName(field_name))
+        node_template.defineField(fields[-1])
+    field_cache = field_module.createFieldcache()
+    node = nodeset.createNode(identifier, node_template)
+    # Set the node coordinates, first set the field cache to use the current node
+    field_cache.setNode(node)
+    # Pass in floats as an array
+    for i, field in enumerate(fields):
+        field_name = field_names[i]
+        field.assignReal(field_cache, getattr(data_object, field_name)())
+
+    return node.getIdentifier()
 
 
 def createNodes(finite_element_field, node_coordinate_set):
