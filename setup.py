@@ -1,8 +1,21 @@
-from setuptools import setup, find_packages
 import io
+import os
+import re
+
+from setuptools import setup, find_packages
 
 # List all of your Python package dependencies in the
 # requirements.txt file
+
+
+here = os.path.abspath(os.path.dirname(__file__))
+
+with open(os.path.join(here, 'opencmiss', 'utils', '__init__.py')) as fd:
+    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+                        fd.read(), re.MULTILINE).group(1)
+
+if not version:
+    raise RuntimeError('Cannot find version information')
 
 
 def readfile(filename, split=False):
@@ -18,14 +31,14 @@ software_licence = readfile("LICENSE")
 
 setup(
     name='opencmiss.utils',
-    version='0.1.2',
+    version=version,
     description='OpenCMISS Utilities for Python.',
     long_description='\n'.join(readme) + software_licence,
     classifiers=[],
     author='Hugh Sorby',
-    author_email='',
-    url='',
-    license='APACHE',
+    author_email='h.sorby@auckland.ac.nz',
+    url='https://github.com/OpenCMISS-Bindings/opencmiss.utils',
+    license='Apache Software License',
     packages=find_packages(exclude=['ez_setup',]),
     include_package_data=True,
     zip_safe=False,
