@@ -1,6 +1,5 @@
 import dicom
 import os
-import numpy as np
 
 from opencmiss.utils.maths import vectorops
 
@@ -30,8 +29,8 @@ def extractImageCorners(directory, filename):
     orient_1 = orient[:3]
     orient_2 = orient[3:]
     pos_o = pos[:]
-    pos = vectorops.sub(pos_o,
-            vectorops.mult(vectorops.add(vectorops.mult(orient_1, 0.5), vectorops.mult(orient_2, 0.5)), delta_i))
+    pos = vectorops.sub(pos_o, vectorops.mult(vectorops.add(vectorops.mult(orient_1, 0.5),
+                                                            vectorops.mult(orient_2, 0.5)), delta_i))
 
     A = [[orient[0]*delta_i, orient[3]*delta_j, 0, pos[0]],
          [orient[1]*delta_i, orient[4]*delta_j, 0, pos[1]],
