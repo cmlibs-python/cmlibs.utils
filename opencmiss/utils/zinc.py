@@ -38,7 +38,7 @@ def createFiniteElementField(region, dimension=3, field_name='coordinates', mana
     return finite_element_field
 
 
-def createNode(field_module, field_names, data_object, identifier=-1):
+def createNode(field_module, field_names, data_object, identifier=-1, node_set_name='nodes'):
     """
     Create a Node in the field_module using the field_names and data_object.  Optionally use the identifier to
     set the identifier of the Node created.
@@ -47,10 +47,11 @@ def createNode(field_module, field_names, data_object, identifier=-1):
     :param field_names: A list of field_names that can be found in the field_module.
     :param data_object: The object that can supply the values for the field_names through the same named method.
     :param identifier: Identifier to assign to the node. Default value is '-1'.
+    :param node_set_name: Name of the node set to create the node in.
     :return: The node identifier assigned to the created node.
     """
     # Find a special node set named 'nodes'
-    nodeset = field_module.findNodesetByName('nodes')
+    nodeset = field_module.findNodesetByName(node_set_name)
     node_template = nodeset.createNodetemplate()
 
     # Set the finite element coordinate field for the nodes to use
@@ -70,17 +71,18 @@ def createNode(field_module, field_names, data_object, identifier=-1):
     return node.getIdentifier()
 
 
-def createNodes(finite_element_field, node_coordinate_set):
+def createNodes(finite_element_field, node_coordinate_set, node_set_name='nodes'):
     """
     Create a node for every coordinate in the node_coordinate_set.
 
     :param finite_element_field:
     :param node_coordinate_set:
+    :param node_set_name:
     :return: None
     """
     fieldmodule = finite_element_field.getFieldmodule()
     # Find a special node set named 'nodes'
-    nodeset = fieldmodule.findNodesetByName('nodes')
+    nodeset = fieldmodule.findNodesetByName(node_set_name)
     node_template = nodeset.createNodetemplate()
     
     # Set the finite element coordinate field for the nodes to use
