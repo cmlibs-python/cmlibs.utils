@@ -26,7 +26,6 @@ def readfile(filename, split=False):
 
 
 readme = readfile("README.rst", split=True)
-readme.append('')
 readme.append('License')
 readme.append('=======')
 readme.append('')
