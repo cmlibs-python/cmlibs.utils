@@ -43,3 +43,6 @@ def calculatePlaneNormal(pt1, pt2, pt3):
     cross_vec = cross(dir_1, dir_2)
     return normalize(cross_vec)
 
+
+# define PEP8 compliant names.
+calculate_line_plane_intersection = calculateLinePlaneIntersection
