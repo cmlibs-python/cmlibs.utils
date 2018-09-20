@@ -25,7 +25,12 @@ def readfile(filename, split=False):
         return stream.read()
 
 
-readme = readfile("README.rst", split=True)[3:]  # skip title
+readme = readfile("README.rst", split=True)
+readme.append('')
+readme.append('License')
+readme.append('=======')
+readme.append('')
+readme.append('')
 requires = readfile("requirements.txt", split=True)
 software_licence = readfile("LICENSE")
 
