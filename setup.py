@@ -4,9 +4,6 @@ import re
 
 from setuptools import setup, find_packages
 
-# List all of your Python package dependencies in the
-# requirements.txt file
-
 
 here = os.path.abspath(os.path.dirname(__file__))
 
