@@ -27,7 +27,7 @@ readme.append('License')
 readme.append('=======')
 readme.append('')
 readme.append('')
-requires = readfile("requirements.txt", split=True)
+requires = ['opencmiss.zinc']
 software_licence = readfile("LICENSE")
 
 setup(
