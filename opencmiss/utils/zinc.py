@@ -16,12 +16,19 @@ class AbstractNodeDataObject(object):
         self._field_names = field_names
         self._time_sequence = time_sequence if time_sequence else []
         self._time_sequence_field_names = time_sequence_field_names if time_sequence_field_names else []
-        for field_name in field_names:
+        self._check_field_names()
+
+    def _check_field_names(self):
+        for field_name in self._field_names:
             if not hasattr(self, field_name):
                 raise NotImplementedError('Missing data method for field: %s' % field_name)
 
     def get_field_names(self):
         return self._field_names
+
+    def set_field_names(self, field_names):
+        self._field_names = field_names
+        self._check_field_names()
 
     def get_time_sequence(self):
         return self._time_sequence
@@ -105,7 +112,11 @@ def createNode(field_module, data_object, identifier=-1, node_set_name='nodes', 
     # Pass in floats as an array
     for i, field in enumerate(fields):
         field_name = field_names[i]
-        field.assignReal(field_cache, getattr(data_object, field_name)())
+        field_value = getattr(data_object, field_name)()
+        if isinstance(field_value, ("".__class__, u"".__class__)):
+            field.assignString(field_cache, field_value)
+        else:
+            field.assignReal(field_cache, field_value)
 
     return node.getIdentifier()
 
@@ -118,6 +129,8 @@ def createNodes(finite_element_field, node_coordinate_set, node_set_name='nodes'
     :param node_coordinate_set:
     :param node_set_name:
     :param time: The time to set for the node, defaults to None for nodes that are not time aware.
+    :param node_set: The node set to use for creating nodes, if not set then the node set for creating nodes is
+    chosen by node_set_name.
     :return: None
     """
     fieldmodule = finite_element_field.getFieldmodule()
@@ -531,3 +544,4 @@ create_finite_element_field = createFiniteElementField
 create_square_2d_finite_element = createSquare2DFiniteElement
 create_volume_image_field = createVolumeImageField
 create_material_using_image_field = createMaterialUsingImageField
+define_standard_visualisation_tools = defineStandardVisualisationTools
