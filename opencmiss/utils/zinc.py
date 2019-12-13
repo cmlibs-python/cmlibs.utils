@@ -10,39 +10,135 @@ from opencmiss.zinc.status import OK as ZINC_OK
 from opencmiss.utils.maths import vectorops
 
 
-def createFiniteElementField(region):
-    '''
+class AbstractNodeDataObject(object):
+
+    def __init__(self, field_names, time_sequence=None, time_sequence_field_names=None):
+        self._field_names = field_names
+        self._time_sequence = time_sequence if time_sequence else []
+        self._time_sequence_field_names = time_sequence_field_names if time_sequence_field_names else []
+        self._check_field_names()
+
+    def _check_field_names(self):
+        for field_name in self._field_names:
+            if not hasattr(self, field_name):
+                raise NotImplementedError('Missing data method for field: %s' % field_name)
+
+    def get_field_names(self):
+        return self._field_names
+
+    def set_field_names(self, field_names):
+        self._field_names = field_names
+        self._check_field_names()
+
+    def get_time_sequence(self):
+        return self._time_sequence
+
+    def set_time_sequence(self, time_sequence):
+        self._time_sequence = time_sequence
+
+    def get_time_sequence_field_names(self):
+        return self._time_sequence_field_names
+
+    def set_time_sequence_field_names(self, time_sequence_field_names):
+        self._time_sequence_field_names = time_sequence_field_names
+
+
+def createFiniteElementField(region, dimension=3, field_name='coordinates', managed=True, type_coordinate=True):
+    """
     Create a finite element field of three dimensions
     called 'coordinates' and set the coordinate type true.
-    '''
+
+    :param region: The region to create the finite  element field in.
+    :param dimension: The dimension of the finite element field to create, defaults to 3.
+    :param field_name: The name of the field, defaults to 'coordinates'.
+    :param managed: Is managed, True or False.  Defaults to True.
+    :param type_coordinate: Is type coordinate: True or False.  Defaults to True.
+    """
     fieldmodule = region.getFieldmodule()
     fieldmodule.beginChange()
 
     # Create a finite element field with 3 components to represent 3 dimensions
-    finite_element_field = fieldmodule.createFieldFiniteElement(3)
+    finite_element_field = fieldmodule.createFieldFiniteElement(dimension)
 
     # Set the name of the field
-    finite_element_field.setName('coordinates')
+    finite_element_field.setName(field_name)
     # Set the attribute is managed to 1 so the field module will manage the field for us
 
-    finite_element_field.setManaged(True)
-    finite_element_field.setTypeCoordinate(True)
+    finite_element_field.setManaged(managed)
+    finite_element_field.setTypeCoordinate(type_coordinate)
     fieldmodule.endChange()
 
     return finite_element_field
 
 
-def createNodes(finite_element_field, node_coordinate_set):
+def createNode(field_module, data_object, identifier=-1, node_set_name='nodes', time=None):
+    """
+    Create a Node in the field_module using the data_object.  The data object must supply a 'get_field_names' method
+    and a 'get_time_sequence' method.  Derive a node data object from the 'AbstractNodeDataObject' class to ensure
+    that the data object class meets it's requirements.
+
+    Optionally use the identifier to set the identifier of the Node created, the time parameter to set
+    the time value in the cache, or the node_set_name to specify which node set to use the default node set
+    is 'nodes'.
+
+    :param field_module: The field module that has at least the fields defined with names in field_names.
+    :param data_object: The object that can supply the values for the field_names through the same named method.
+    :param identifier: Identifier to assign to the node. Default value is '-1'.
+    :param node_set_name: Name of the node set to create the node in.
+    :param time: The time to set for the node, defaults to None for nodes that are not time aware.
+    :return: The node identifier assigned to the created node.
+    """
+    # Find a special node set named 'nodes'
+    node_set = field_module.findNodesetByName(node_set_name)
+    node_template = node_set.createNodetemplate()
+
+    # Set the finite element coordinate field for the nodes to use
+    fields = []
+    field_names = data_object.get_field_names()
+    for field_name in field_names:
+        fields.append(field_module.findFieldByName(field_name))
+        node_template.defineField(fields[-1])
+    if data_object.get_time_sequence():
+        time_sequence = field_module.getMatchingTimesequence(data_object.get_time_sequence())
+        for field_name in data_object.get_time_sequence_field_names():
+            time_sequence_field = field_module.findFieldByName(field_name)
+            node_template.setTimesequence(time_sequence_field, time_sequence)
+    field_cache = field_module.createFieldcache()
+    node = node_set.createNode(identifier, node_template)
+    # Set the node coordinates, first set the field cache to use the current node
+    field_cache.setNode(node)
+    if time:
+        field_cache.setTime(time)
+    # Pass in floats as an array
+    for i, field in enumerate(fields):
+        field_name = field_names[i]
+        field_value = getattr(data_object, field_name)()
+        if isinstance(field_value, ("".__class__, u"".__class__)):
+            field.assignString(field_cache, field_value)
+        else:
+            field.assignReal(field_cache, field_value)
+
+    return node.getIdentifier()
+
+
+def createNodes(finite_element_field, node_coordinate_set, node_set_name='nodes', time=None, node_set=None):
     """
     Create a node for every coordinate in the node_coordinate_set.
 
     :param finite_element_field:
     :param node_coordinate_set:
+    :param node_set_name:
+    :param time: The time to set for the node, defaults to None for nodes that are not time aware.
+    :param node_set: The node set to use for creating nodes, if not set then the node set for creating nodes is
+    chosen by node_set_name.
     :return: None
     """
     fieldmodule = finite_element_field.getFieldmodule()
     # Find a special node set named 'nodes'
-    nodeset = fieldmodule.findNodesetByName('nodes')
+    if node_set:
+        nodeset = node_set
+    else:
+        nodeset = fieldmodule.findNodesetByName(node_set_name)
     node_template = nodeset.createNodetemplate()
     
     # Set the finite element coordinate field for the nodes to use
@@ -52,6 +148,8 @@ def createNodes(finite_element_field, node_coordinate_set):
         node = nodeset.createNode(-1, node_template)
         # Set the node coordinates, first set the field cache to use the current node
         field_cache.setNode(node)
+        if time:
+            field_cache.setTime(time)
         # Pass in floats as an array
         finite_element_field.assignReal(field_cache, node_coordinate)
 
@@ -438,3 +536,12 @@ def createMaterialUsingImageField(region, image_field, colour_mapping_type=None,
     material.setTextureField(1, image_field)
 
     return material
+
+
+# Create PEP8 conformant names of functions.
+create_node = createNode
+create_finite_element_field = createFiniteElementField
+create_square_2d_finite_element = createSquare2DFiniteElement
+create_volume_image_field = createVolumeImageField
+create_material_using_image_field = createMaterialUsingImageField
+define_standard_visualisation_tools = defineStandardVisualisationTools
