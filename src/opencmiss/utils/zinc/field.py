@@ -363,7 +363,7 @@ def getOrCreateCoordinatesField(fieldmodule : Fieldmodule, name="coordinates", c
     from 1 to 3 components named "x", "y" and "z". New field is managed.
     '''
     assert 1 <= componentsCount <= 3
-    return getOrCreateFieldFiniteElement(region.getFieldmodule(), name, componentsCount,
+    return getOrCreateFieldFiniteElement(fieldmodule, name, componentsCount,
         componentNames=("x", "y", "z"), managed=True, coordinate=True)
 
 
