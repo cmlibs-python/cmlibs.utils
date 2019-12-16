@@ -7,7 +7,7 @@ from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-with open(os.path.join(here, 'opencmiss', 'utils', '__init__.py')) as fd:
+with open(os.path.join(here, 'src', 'opencmiss', 'utils', '__init__.py')) as fd:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                         fd.read(), re.MULTILINE).group(1)
 
