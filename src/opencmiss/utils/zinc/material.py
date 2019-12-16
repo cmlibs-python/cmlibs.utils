@@ -6,10 +6,9 @@ from opencmiss.utils.zinc.general import ZincCacheChanges
 from opencmiss.zinc.field import Field
 from opencmiss.zinc.material import Material
 from opencmiss.zinc.region import Region
-from opencmiss.zinc.result import RESULT_OK
 
 
-def createMaterialUsingImageField(region : Region, image_field : Field, colour_mapping_type=None, image_range=None) -> Material:
+def create_material_using_image_field(region: Region, image_field: Field, colour_mapping_type=None, image_range=None) -> Material:
     """
     Use an image field in a material to create an OpenGL texture.  Returns the
     created material.
@@ -35,3 +34,6 @@ def createMaterialUsingImageField(region : Region, image_field : Field, colour_m
             component.setRangeMaximum(image_range[1])
         material.setTextureField(1, image_field)
     return material
+
+
+createMaterialUsingImageField = create_material_using_image_field

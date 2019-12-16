@@ -10,31 +10,7 @@ from opencmiss.zinc.node import Node, Nodeset
 from opencmiss.zinc.result import RESULT_OK
 
 
-def createNodes(nodeset : Nodeset, finite_element_field : Field, node_coordinate_set):
-    """
-    Create a node for every coordinate in the node_coordinate_set.
-
-    :param nodeset: The Zinc Nodeset to create nodes in.
-    :param finite_element_field: Zinc FieldFiniteElement to define node coordinates for.
-    :param node_coordinate_set: Sequence containing list of coordinates with
-    same number as number of components in finite_element_field.
-    :return: None
-    """
-    assert finite_element_field.castFiniteElement().isValid()
-    fieldmodule = finite_element_field.getFieldmodule()
-    node_template = nodeset.createNodetemplate()
-    node_template.defineField(finite_element_field)
-    field_cache = fieldmodule.createFieldcache()
-    with ZincCacheChanges(fieldmodule):
-        for node_coordinate in node_coordinate_set:
-            node = nodeset.createNode(-1, node_template)
-            # Set the node coordinates, first set the field cache to use the current node
-            field_cache.setNode(node)
-            # Pass in floats as an array
-            finite_element_field.assignReal(field_cache, node_coordinate)
-
-
-def createTriangleElements(mesh : Mesh, finite_element_field : Field, element_node_set):
+def create_triangle_elements(mesh: Mesh, finite_element_field: Field, element_node_set):
     """
     Create a linear triangular element for every set of 3 local nodes in element_node_set.
 
@@ -58,7 +34,7 @@ def createTriangleElements(mesh : Mesh, finite_element_field : Field, element_no
     fieldmodule.defineAllFaces()
 
 
-def createCubeElement(mesh : Mesh, finite_element_field : Field, node_coordinate_set):
+def create_cube_element(mesh: Mesh, finite_element_field: Field, node_coordinate_set):
     """
     Create a single finite element using the supplied
     finite element field and sequence of 8 n-D node coordinates.
@@ -79,7 +55,7 @@ def createCubeElement(mesh : Mesh, finite_element_field : Field, node_coordinate
     element_template = mesh.createElementtemplate()
     element_template.setElementShapeType(Element.SHAPE_TYPE_CUBE)
     linear_basis = fieldmodule.createElementbasis(3, Elementbasis.FUNCTION_TYPE_LINEAR_LAGRANGE)
-    eft = mesh.createElementfieldtemplate(linear_basis);
+    eft = mesh.createElementfieldtemplate(linear_basis)
     element_template.defineField(finite_element_field, -1, eft)
     field_cache = fieldmodule.createFieldcache()
     with ZincCacheChanges(fieldmodule):
@@ -94,7 +70,7 @@ def createCubeElement(mesh : Mesh, finite_element_field : Field, node_coordinate
     fieldmodule.defineAllFaces()
 
 
-def createSquareElement(mesh : Mesh, finite_element_field : Field, node_coordinate_set):
+def create_square_element(mesh: Mesh, finite_element_field: Field, node_coordinate_set):
     """
     Create a single square 2-D finite element using the supplied
     finite element field and sequence of 4 n-D node coordinates.
@@ -130,7 +106,7 @@ def createSquareElement(mesh : Mesh, finite_element_field : Field, node_coordina
     fieldmodule.defineAllFaces()
 
 
-def findNodeWithName(nodeset : Nodeset, nameField : Field, name):
+def find_node_with_name(nodeset: Nodeset, nameField: Field, name):
     """
     Get single node in nodeset with supplied name.
     :param nodeset: Zinc Nodeset or NodesetGroup to search.
@@ -154,7 +130,7 @@ def findNodeWithName(nodeset : Nodeset, nameField : Field, name):
     return nodeWithName
 
 
-def getNodeNameCentres(nodeset : Nodeset, coordinatesField : Field, nameField : Field):
+def get_node_name_centres(nodeset: Nodeset, coordinatesField: Field, nameField: Field):
     """
     Find mean locations of node coordinate with the same names.
     :param nodeset: Zinc Nodeset or NodesetGroup to search.
@@ -196,7 +172,7 @@ def getNodeNameCentres(nodeset : Nodeset, coordinatesField : Field, nameField : 
     return nameCentres
 
 
-def evaluateNodesetCoordinatesRange(coordinates : Field, nodeset : Nodeset):
+def evaluate_nodeset_coordinates_range(coordinates: Field, nodeset: Nodeset):
     """
     :return: min, max range of coordinates field over nodes.
     """
@@ -216,7 +192,7 @@ def evaluateNodesetCoordinatesRange(coordinates : Field, nodeset : Nodeset):
     return minX, maxX
 
 
-def evaluateNodesetMeanCoordinates(coordinates : Field, nodeset : Nodeset):
+def evaluate_nodeset_mean_coordinates(coordinates: Field, nodeset: Nodeset):
     """
     :return: Mean of coordinates over nodeset.
     """
@@ -233,7 +209,7 @@ def evaluateNodesetMeanCoordinates(coordinates : Field, nodeset : Nodeset):
     return meanCoordinates
 
 
-def transformCoordinates(field : Field, rotationScale, offset, time = 0.0) -> bool:
+def transform_coordinates(field: Field, rotationScale, offset, time = 0.0) -> bool:
     '''
     Transform finite element field coordinates by matrix and offset, handling nodal derivatives and versions.
     Limited to nodal parameters, rectangular cartesian coordinates
@@ -291,3 +267,47 @@ def transformCoordinates(field : Field, rotationScale, offset, time = 0.0) -> bo
     if not success:
         print('zinc.transformCoordinates: failed to get/set some values')
     return success
+
+
+def create_nodes(finite_element_field, node_coordinate_set, node_set_name='nodes', time=None, node_set=None):
+    """
+    Create a node for every coordinate in the node_coordinate_set.
+
+    :param finite_element_field:
+    :param node_coordinate_set:
+    :param node_set_name:
+    :param time: The time to set for the node, defaults to None for nodes that are not time aware.
+    :param node_set: The node set to use for creating nodes, if not set then the node set for creating nodes is
+    chosen by node_set_name.
+    :return: None
+    """
+    fieldmodule = finite_element_field.getFieldmodule()
+    # Find a special node set named 'nodes'
+    if node_set:
+        nodeset = node_set
+    else:
+        nodeset = fieldmodule.findNodesetByName(node_set_name)
+    node_template = nodeset.createNodetemplate()
+
+    # Set the finite element coordinate field for the nodes to use
+    node_template.defineField(finite_element_field)
+    field_cache = fieldmodule.createFieldcache()
+    for node_coordinate in node_coordinate_set:
+        node = nodeset.createNode(-1, node_template)
+        # Set the node coordinates, first set the field cache to use the current node
+        field_cache.setNode(node)
+        if time:
+            field_cache.setTime(time)
+        # Pass in floats as an array
+        finite_element_field.assignReal(field_cache, node_coordinate)
+
+
+createCubeElement = create_cube_element
+createSquareElement = create_square_element
+findNodeWithName = find_node_with_name
+getNodeNameCentres = get_node_name_centres
+evaluateNodesetCoordinatesRange = evaluate_nodeset_coordinates_range
+evaluateNodesetMeanCoordinates = evaluate_nodeset_mean_coordinates
+transformCoordinates = transform_coordinates
+createNodes = create_nodes
+createTriangleElements = create_triangle_elements
