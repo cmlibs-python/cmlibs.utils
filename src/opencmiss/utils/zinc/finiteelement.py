@@ -210,16 +210,16 @@ def evaluate_nodeset_mean_coordinates(coordinates: Field, nodeset: Nodeset):
 
 
 def transform_coordinates(field: Field, rotationScale, offset, time = 0.0) -> bool:
-    '''
+    """
     Transform finite element field coordinates by matrix and offset, handling nodal derivatives and versions.
     Limited to nodal parameters, rectangular cartesian coordinates
     :param field: the coordinate field to transform
     :param rotationScale: square transformation matrix 2-D array with as many rows and columns as field components.
     :param offset: coordinates offset
     :return: True on success, otherwise false
-    '''
+    """
     ncomp = field.getNumberOfComponents()
-    if ((ncomp != 2) and (ncomp != 3)):
+    if (ncomp != 2) and (ncomp != 3):
         print('zinc.transformCoordinates: field has invalid number of components')
         return False
     if (len(rotationScale) != ncomp) or (len(offset) != ncomp):
