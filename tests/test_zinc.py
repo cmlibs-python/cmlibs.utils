@@ -2,12 +2,12 @@ import math
 import os
 import unittest
 from opencmiss.utils.zinc.field import createFieldMeshIntegral, getOrCreateFieldCoordinates
-from opencmiss.utils.zinc.finiteelement import createCubeElement, createSquareElement, createNodes, createTriangleElements, \
+from opencmiss.utils.zinc.finiteelement import createCubeElement, createSquareElement, createNodes, \
+    createTriangleElements, \
     evaluateNodesetMeanCoordinates
 from opencmiss.zinc.context import Context
 from opencmiss.zinc.field import Field
 from opencmiss.zinc.result import RESULT_OK
-
 
 here = os.path.abspath(os.path.dirname(__file__))
 
@@ -45,13 +45,13 @@ class ZincUtilsTestCase(unittest.TestCase):
         nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
         mesh1d = fieldmodule.findMeshByDimension(1)
         mesh2d = fieldmodule.findMeshByDimension(2)
-        nodeCoordinates4 = [[0.1, 0.2, 0.3 ], [ 1.1, 0.2, 0.4 ], [ 0.1, 1.2, 0.4 ], [ 1.1, 1.2, 0.3 ] ]
+        nodeCoordinates4 = [[0.1, 0.2, 0.3], [1.1, 0.2, 0.4], [0.1, 1.2, 0.4], [1.1, 1.2, 0.3]]
         createNodes(coordinates, nodeCoordinates4, node_set=nodes)
         self.assertEqual(4, nodes.getSize())
         meanCoordinates = evaluateNodesetMeanCoordinates(coordinates, nodes)
-        assertAlmostEqualList(self, [ 0.6, 0.7, 0.35 ], meanCoordinates, delta=1.0E-7)
+        assertAlmostEqualList(self, [0.6, 0.7, 0.35], meanCoordinates, delta=1.0E-7)
 
-        createTriangleElements(mesh2d, coordinates, [ [ 1, 2, 3 ], [ 3, 2, 4 ] ])
+        createTriangleElements(mesh2d, coordinates, [[1, 2, 3], [3, 2, 4]])
         self.assertEqual(2, mesh2d.getSize())
         self.assertEqual(5, mesh1d.getSize())
         surfaceAreaField = createFieldMeshIntegral(coordinates, mesh2d, numberOfPoints=1)
@@ -66,11 +66,11 @@ class ZincUtilsTestCase(unittest.TestCase):
         nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
         mesh1d = fieldmodule.findMeshByDimension(1)
         mesh2d = fieldmodule.findMeshByDimension(2)
-        nodeCoordinates4 = [ [ 0.1, 0.2, 0.3 ], [ 1.1, 0.2, 0.4 ], [ 0.1, 1.2, 0.4 ], [ 1.1, 1.2, 0.3 ] ]
+        nodeCoordinates4 = [[0.1, 0.2, 0.3], [1.1, 0.2, 0.4], [0.1, 1.2, 0.4], [1.1, 1.2, 0.3]]
         createSquareElement(mesh2d, coordinates, nodeCoordinates4)
         self.assertEqual(4, nodes.getSize())
         meanCoordinates = evaluateNodesetMeanCoordinates(coordinates, nodes)
-        assertAlmostEqualList(self, [ 0.6, 0.7, 0.35 ], meanCoordinates, delta=1.0E-7)
+        assertAlmostEqualList(self, [0.6, 0.7, 0.35], meanCoordinates, delta=1.0E-7)
         self.assertEqual(1, mesh2d.getSize())
         self.assertEqual(4, mesh1d.getSize())
         surfaceAreaField = createFieldMeshIntegral(coordinates, mesh2d, numberOfPoints=4)
@@ -86,12 +86,12 @@ class ZincUtilsTestCase(unittest.TestCase):
         mesh1d = fieldmodule.findMeshByDimension(1)
         mesh2d = fieldmodule.findMeshByDimension(2)
         mesh3d = fieldmodule.findMeshByDimension(3)
-        nodeCoordinates8 = [ [ 0.1, 0.2, 0.3 ], [ 1.1, 0.2, 0.4 ], [ 0.1, 1.2, 0.4 ], [ 1.1, 1.2, 0.3 ],
-                             [ 0.1, 0.2, 1.3 ], [ 1.1, 0.2, 1.2 ], [ 0.1, 1.2, 1.2 ], [ 1.1, 1.2, 1.3 ] ]
+        nodeCoordinates8 = [[0.1, 0.2, 0.3], [1.1, 0.2, 0.4], [0.1, 1.2, 0.4], [1.1, 1.2, 0.3],
+                            [0.1, 0.2, 1.3], [1.1, 0.2, 1.2], [0.1, 1.2, 1.2], [1.1, 1.2, 1.3]]
         createCubeElement(mesh3d, coordinates, nodeCoordinates8)
         self.assertEqual(8, nodes.getSize())
         meanCoordinates = evaluateNodesetMeanCoordinates(coordinates, nodes)
-        assertAlmostEqualList(self, [ 0.6, 0.7, 0.8 ], meanCoordinates, delta=1.0E-7)
+        assertAlmostEqualList(self, [0.6, 0.7, 0.8], meanCoordinates, delta=1.0E-7)
         self.assertEqual(1, mesh3d.getSize())
         self.assertEqual(6, mesh2d.getSize())
         self.assertEqual(12, mesh1d.getSize())
