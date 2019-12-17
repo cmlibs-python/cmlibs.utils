@@ -3,7 +3,7 @@ Utilities for creating and working with Zinc Finite Elements.
 """
 from opencmiss.utils.maths import vectorops
 from opencmiss.utils.zinc.general import ZincCacheChanges
-from opencmiss.zinc.element import Element, Elementbasis, Mesh
+from opencmiss.zinc.element import Element, Elementbasis, Elementfieldtemplate, Mesh
 from opencmiss.zinc.field import Field, FieldFiniteElement
 from opencmiss.zinc.fieldmodule import Fieldmodule
 from opencmiss.zinc.node import Node, Nodeset
@@ -172,41 +172,41 @@ def get_node_name_centres(nodeset: Nodeset, coordinatesField: Field, nameField: 
     return nameCentres
 
 
-def evaluate_nodeset_coordinates_range(coordinates: Field, nodeset: Nodeset):
+def evaluate_field_nodeset_range(field: Field, nodeset: Nodeset):
     """
-    :return: min, max range of coordinates field over nodes.
+    :return: min, max range of field over nodes.
     """
     fieldmodule = nodeset.getFieldmodule()
-    componentsCount = coordinates.getNumberOfComponents()
+    components_count = field.getNumberOfComponents()
     with ZincCacheChanges(fieldmodule):
-        minCoordinates = fieldmodule.createFieldNodesetMinimum(coordinates, nodeset)
-        maxCoordinates = fieldmodule.createFieldNodesetMaximum(coordinates, nodeset)
+        min_field = fieldmodule.createFieldNodesetMinimum(field, nodeset)
+        max_field = fieldmodule.createFieldNodesetMaximum(field, nodeset)
         fieldcache = fieldmodule.createFieldcache()
-        result, minX = minCoordinates.evaluateReal(fieldcache, componentsCount)
+        result, min_values = min_field.evaluateReal(fieldcache, components_count)
         assert result == RESULT_OK
-        result, maxX = maxCoordinates.evaluateReal(fieldcache, componentsCount)
+        result, max_values = max_field.evaluateReal(fieldcache, components_count)
         assert result == RESULT_OK
-        del minCoordinates
-        del maxCoordinates
+        del min_field
+        del max_field
         del fieldcache
-    return minX, maxX
+    return min_values, max_values
 
 
-def evaluate_nodeset_mean_coordinates(coordinates: Field, nodeset: Nodeset):
+def evaluate_field_nodeset_mean(field: Field, nodeset: Nodeset):
     """
-    :return: Mean of coordinates over nodeset.
+    :return: Mean of field over nodeset.
     """
     fieldmodule = nodeset.getFieldmodule()
-    componentsCount = coordinates.getNumberOfComponents()
+    components_count = field.getNumberOfComponents()
     with ZincCacheChanges(fieldmodule):
-        meanCoordinatesField = fieldmodule.createFieldNodesetMean(coordinates, nodeset)
+        mean_field = fieldmodule.createFieldNodesetMean(field, nodeset)
         fieldcache = fieldmodule.createFieldcache()
-        result, meanCoordinates = meanCoordinatesField.evaluateReal(fieldcache, componentsCount)
+        result, mean_values = mean_field.evaluateReal(fieldcache, components_count)
         assert result == RESULT_OK
-        del meanCoordinatesField
+        del mean_field
         del fieldcache
     assert result == RESULT_OK
-    return meanCoordinates
+    return mean_values
 
 
 def transform_coordinates(field: Field, rotationScale, offset, time = 0.0) -> bool:
@@ -302,12 +302,81 @@ def create_nodes(finite_element_field, node_coordinate_set, node_set_name='nodes
         finite_element_field.assignReal(field_cache, node_coordinate)
 
 
+def get_element_node_identifiers(element : Element, eft : Elementfieldtemplate) -> list:
+    """
+    Get list of node identifiers used by eft in element in the order for eft.
+
+    :param element: The element to query.
+    :param eft: The element field template the nodes are mapped for.
+    :return: List of global node identifiers.
+    """
+    node_identifiers = []
+    for n in range(eft.getNumberOfLocalNodes()):
+        node = element.getNode(eft, n + 1)
+        node_identifiers.append(node.getIdentifier())
+    return node_identifiers
+
+
+def get_element_node_identifiers_basis_order(element : Element, eft : Elementfieldtemplate) -> list:
+    '''
+    Get list of node identifiers used by eft in element with the default number
+    and order for the element basis. For example, with a bilinear lagrange
+    basis, 4 node identifiers are always returned, possibly with repeats, even
+    if the eft collapsed it to 3 nodes in an arbitrary order.
+
+    :param element: The element to query.
+    :param eft: The element field template the nodes are mapped for.
+    :return: List of global node identifiers.
+    '''
+    node_identifiers = []
+    fn = 1
+    for n in range(eft.getElementbasis().getNumberOfNodes()):
+        ln = eft.getTermLocalNodeIndex(fn, 1)
+        node_identifiers.append(element.getNode(eft, ln).getIdentifier())
+        fn += elementbasis.getNumberOfFunctionsPerNode(n + 1)
+    return node_identifiers
+
+
+def get_maximum_element_identifier(mesh : Mesh) -> int:
+    """
+    :return: Maximum element identifier in mesh or -1 if none.
+    """
+    maximumElementId = -1
+    elementiterator = mesh.createElementiterator()
+    element = elementiterator.next()
+    while element.isValid():
+        id = element.getIdentifier()
+        if id > maximumElementId:
+            maximumElementId = id
+        element = elementiterator.next()
+    return maximumElementId
+
+
+def get_maximum_node_identifier(nodeset : Nodeset) -> int:
+    """
+    :return: Maximum node identifier in nodeset or -1 if none.
+    """
+    maximumNodeId = -1
+    nodeiterator = nodeset.createNodeiterator()
+    node = nodeiterator.next()
+    while node.isValid():
+        id = node.getIdentifier()
+        if id > maximumNodeId:
+            maximumNodeId = id
+        node = nodeiterator.next()
+    return maximumNodeId
+
+
 createCubeElement = create_cube_element
 createSquareElement = create_square_element
 findNodeWithName = find_node_with_name
 getNodeNameCentres = get_node_name_centres
-evaluateNodesetCoordinatesRange = evaluate_nodeset_coordinates_range
-evaluateNodesetMeanCoordinates = evaluate_nodeset_mean_coordinates
+evaluateFieldNodesetRange = evaluate_field_nodeset_range
+evaluateFieldNodesetMean = evaluate_field_nodeset_mean
 transformCoordinates = transform_coordinates
 createNodes = create_nodes
 createTriangleElements = create_triangle_elements
+getElementNodeIdentifiers = get_element_node_identifiers
+getElementNodeIdentifiersBasisOrder = get_element_node_identifiers_basis_order
+getMaximumElementIdentifier = get_maximum_element_identifier
+getMaximumNodeIdentifier = get_maximum_node_identifier

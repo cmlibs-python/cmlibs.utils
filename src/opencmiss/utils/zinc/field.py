@@ -3,8 +3,10 @@ Utilities for creating and working with Zinc Fields.
 '''
 from opencmiss.utils.zinc.general import ZincCacheChanges
 from opencmiss.zinc.element import Mesh
-from opencmiss.zinc.field import Field, FieldFiniteElement, FieldStoredMeshLocation
+from opencmiss.zinc.field import Field, FieldFiniteElement, FieldGroup, \
+    FieldStoredMeshLocation
 from opencmiss.zinc.fieldmodule import Fieldmodule
+from opencmiss.zinc.node import Nodeset, NodesetGroup
 from opencmiss.zinc.result import RESULT_OK
 
 
@@ -168,18 +170,18 @@ def _create_plane_equation_formulation(fieldmodule, finite_element_field, plane_
     return iso_scalar_field
 
 
-def create_field_image(fieldmodule, image_filename, field_name='image'):
+def create_field_image(fieldmodule, image_filename, name='image'):
     """
     Create an image field using the given fieldmodule.  The image filename must exist and
     be a known image type.
 
     :param fieldmodule: The fieldmodule to create the field in.
     :param image_filename: Image filename.
-    :param field_name: Optional name of the image field, defaults to 'image'.
+    :param name: Optional name of the image field, defaults to 'image'.
     :return: The image field created.
     """
     image_field = fieldmodule.createFieldImage()
-    image_field.setName(field_name)
+    image_field.setName(name)
     image_field.setFilterMode(image_field.FILTER_MODE_LINEAR)
 
     # Create a stream information object that we can use to read the
@@ -218,25 +220,25 @@ def create_fields_transformations(coordinates : Field, rotationAngles = None, sc
         rotation = fieldmodule.createFieldConstant(rotationAngles)
         scale = fieldmodule.createFieldConstant(scaleValue)
         translation = fieldmodule.createFieldConstant(translationOffsets)
-        rotationMatrix = createEulerAnglesRotationMatrixField(fieldmodule, rotation)
+        rotationMatrix = create_field_euler_angles_rotation_matrix(fieldmodule, rotation)
         rotatedCoordinates = fieldmodule.createFieldMatrixMultiply(componentsCount, rotationMatrix, coordinates)
         transformedCoordinates = rotatedCoordinates*scale + translation
         assert transformedCoordinates.isValid()
     return transformedCoordinates, rotation, scale, translation
 
 
-def create_field_volume_image(fieldmodule, image_filenames, field_name='volume_image'):
+def create_field_volume_image(fieldmodule, image_filenames, name='volume_image'):
     """
     Create an image field using the given fieldmodule.  The image filename must exist and
     be a known image type.
 
     :param fieldmodule: The fieldmodule to create the field in.
     :param image_filenames: Image filename.
-    :param field_name: Optional name of the image field, defaults to 'volume_image'.
+    :param name: Optional name of the image field, defaults to 'volume_image'.
     :return: The image field created.
     """
     image_field = fieldmodule.createFieldImage()
-    image_field.setName(field_name)
+    image_field.setName(name)
     image_field.setFilterMode(image_field.FILTER_MODE_LINEAR)
 
     # Create a stream information object that we can use to read the
@@ -278,13 +280,13 @@ def create_field_visibility_for_plane(region, coordinate_field, plane):
     fieldmodule.beginChange()
     normal_field = plane.getNormalField()
     rotation_point_field = plane.getRotationPointField()
-    visibility_field = createPlaneVisibilityField(fieldmodule, coordinate_field, normal_field, rotation_point_field)
+    visibility_field = create_field_plane_visibility(fieldmodule, coordinate_field, normal_field, rotation_point_field)
     fieldmodule.endChange()
 
     return visibility_field
 
 
-def create_field_iso_scalar(region, coordinate_field, plane):
+def create_field_iso_scalar_for_plane(region, coordinate_field, plane):
     fieldmodule = region.getFieldmodule()
     fieldmodule.beginChange()
     normal_field = plane.getNormalField()
@@ -325,18 +327,18 @@ def get_managed_field_names(fieldmodule):
     return field_names
 
 
-def field_exists(fieldmodule: Fieldmodule, field_name: str, field_type='finiteelement', components_count=3) -> bool:
+def field_exists(fieldmodule: Fieldmodule, name: str, field_type='finiteelement', components_count=3) -> bool:
     """
     Tests to determine if the field with the given name exists in the given field module.
 
     :param fieldmodule: Zinc field module to search.
-    :param field_name: Name of field to find.
+    :param name: Name of field to find.
     :param field_type: Type of field if derived type. Default: finiteelement.
     :param components_count: Number of components in the field. Default: 3.
     :return: True if the field is found in the module with the given name and number of components,
     false otherwise.
     """
-    field = fieldmodule.findFieldByName(field_name)
+    field = fieldmodule.findFieldByName(name)
     if field.isValid():
         if field_type == 'finiteelement':
             field = field.castFiniteElement()
@@ -347,11 +349,11 @@ def field_exists(fieldmodule: Fieldmodule, field_name: str, field_type='finiteel
     return False
 
 
-def create_field_finite_element(fieldmodule: Fieldmodule, field_name: str, components_count: int,
+def create_field_finite_element(fieldmodule: Fieldmodule, name: str, components_count: int,
                                 component_names=None, managed=False, type_coordinate=False)-> FieldFiniteElement:
     with ZincCacheChanges(fieldmodule):
         field = fieldmodule.createFieldFiniteElement(components_count)
-        field.setName(field_name)
+        field.setName(name)
         field.setManaged(managed)
         field.setTypeCoordinate(type_coordinate)
         if component_names:
@@ -361,30 +363,29 @@ def create_field_finite_element(fieldmodule: Fieldmodule, field_name: str, compo
     return field
 
 
-def get_or_create_field_finite_element(fieldmodule: Fieldmodule, field_name: str, components_count: int,
+def get_or_create_field_finite_element(fieldmodule: Fieldmodule, name: str, components_count: int,
                                        component_names=None, managed=False, type_coordinate=False)\
         -> FieldFiniteElement:
     """
     Finds or creates a finite element field for the specified number of real components.
-    Asserts existing field is finite element type with correct attributes.
 
     :param fieldmodule:  Zinc Fieldmodule to find or create field in.
-    :param field_name:  Name of field to find or create.
+    :param name:  Name of field to find or create.
     :param components_count: Number of components / dimension of field, from 1 to 3.
     :param component_names: Optional list of component names.
     :param managed: Managed state of field if created here.
     :param type_coordinate: Default value of flag indicating field gives geometric coordinates.
-    :return: Zinc Field.
+    :return: Zinc FieldFiniteElement, invalid if error.
     """
     assert (components_count > 0), "opencmiss.utils.zinc.field.get_or_create_field_finite_element." \
                                    "  Invalid components_count"
     assert (not component_names) or (len(component_names) == components_count),\
         "opencmiss.utils.zinc.field.get_or_create_field_finite_element.  Invalid component_names"
-    if field_exists(fieldmodule, field_name, components_count=components_count):
-        field = fieldmodule.findFieldByName(field_name)
+    if field_exists(fieldmodule, name, components_count=components_count):
+        field = fieldmodule.findFieldByName(name)
         return field.castFiniteElement()
 
-    return create_field_finite_element(fieldmodule, field_name, components_count,
+    return create_field_finite_element(fieldmodule, name, components_count,
                                        component_names, managed, type_coordinate)
 
 
@@ -411,6 +412,114 @@ def get_or_create_field_coordinates(fieldmodule : Fieldmodule, name="coordinates
                                               component_names=("x", "y", "z"), managed=True, type_coordinate=True)
 
 
+def create_field_fibres(fieldmodule : Fieldmodule, name="fibres", components_count=3, managed=False) -> FieldFiniteElement:
+    """
+    Finds or creates a finite element fibre field.
+    New field has component names: "fibre angle", "imbrication angle", "sheet angle".
+    New field is not managed by default.
+
+    :param fieldmodule:  Zinc fieldmodule to find or create field in.
+    :param name:  Name of field to find or create.
+    :param components_count: Number of components of field, from 1 to 3.
+    :param managed: Managed state of field if created here.
+    :return: Zinc FieldFiniteElement
+    """
+    assert 1 <= components_count <= 3
+    with ZincCacheChanges(fieldmodule):
+        fibres = create_field_finite_element(fieldmodule, name, components_count,
+                                             component_names=["fibre angle", "imbrication angle", "sheet angle"],
+                                             managed=managed)
+        fibres.setCoordinateSystemType(Field.COORDINATE_SYSTEM_TYPE_FIBRE)
+    return fibres
+
+
+def get_or_create_field_fibres(fieldmodule : Fieldmodule, name="fibres", components_count=3) -> FieldFiniteElement:
+    """
+    Finds or creates a finite element fibre field.
+    New field has component names: "fibre angle", "imbrication angle", "sheet angle".
+
+    :param fieldmodule:  Zinc fieldmodule to find or create field in.
+    :param name:  Name of field to find or create.
+    :param components_count: Number of components of field, from 1 to 3.
+    :return: Zinc FieldFiniteElement
+    """
+    assert 1 <= components_count <= 3
+    if field_exists(fieldmodule, name, components_count=components_count):
+        fibres = fieldmodule.findFieldByName(name).castFiniteElement()
+        if fibres.getCoordinateSystemType() == Field.COORDINATE_SYSTEM_TYPE_FIBRE:
+            return fibres
+    return create_field_fibres(fieldmodule, name, components_count, managed=True)
+
+
+def create_field_group(fieldmodule : Fieldmodule, name : str, managed=False) -> FieldGroup:
+    """
+    Finds or creates a Group field of the supplied name.
+
+    :param fieldmodule:  Zinc fieldmodule to find or create field in.
+    :param name:  Name of field to find or create.
+    :param managed: Managed state of field if created here.
+    :return: Zinc FieldGroup.
+    """
+    with ZincCacheChanges(fieldmodule):
+        group = fieldmodule.createFieldGroup()
+        group.setName(name)
+        group.setManaged(managed)
+    return group
+
+
+def get_or_create_field_group(fieldmodule : Fieldmodule, name : str) -> FieldGroup:
+    """
+    Finds or creates a Group field of the supplied name.
+    New field is managed.
+
+    :param fieldmodule:  Zinc fieldmodule to find or create field in.
+    :param name:  Name of field to find or create.
+    :return: Zinc FieldGroup.
+    """
+    field = fieldmodule.findFieldByName(name)
+    if field.isValid():
+        group = field.castGroup()
+        if group:
+            return group
+    return create_field_group(fieldmodule, name, managed=True)
+
+def group_get_or_create_nodeset_group(group : FieldGroup, nodeset : Nodeset) -> NodesetGroup:
+    '''
+    Gets or creates the NodesetGroup for the supplied nodeset in group.
+
+    :param group:  Zinc FieldGroup.
+    :param nodeset:  A nodeset from group region to get or create subgroup of.
+    :return: Zinc NodesetGroup.
+    '''
+    nodeGroup = group.getFieldNodeGroup(nodeset)
+    if not nodeGroup.isValid():
+        nodeGroup = group.createFieldNodeGroup(nodeset)
+    return nodeGroup.getNodesetGroup()
+
+
+def create_field_texture_coordinates(fieldmodule : Fieldmodule, name="texture coordinates", components_count=3, managed=False)\
+        -> FieldFiniteElement:
+    """
+    Create texture coordinates finite element field of supplied name with
+    number of components 1, 2, or 3 and the components named "u", "v" and "w" if used.
+    New field is not managed by default.
+    """
+    return create_field_finite_element(fieldmodule, name, components_count,
+                                       component_names=("u", "v", "w"), managed=managed, type_coordinate=True)
+
+
+def get_or_create_field_texture_coordinates(fieldmodule : Fieldmodule, name="texture coordinates", components_count=3)\
+        -> FieldFiniteElement:
+    """
+    Create texture coordinates finite element field of supplied name with
+    number of components 1, 2, or 3 and the components named "u", "v" and "w" if used.
+    New field is managed.
+    """
+    assert 1 <= components_count <= 3
+    return get_or_create_field_finite_element(fieldmodule, name, components_count,
+                                              component_names=("u", "v", "w"), managed=True, type_coordinate=True)
+
+
 def get_or_create_field_stored_mesh_location(fieldmodule : Fieldmodule, mesh : Mesh, name=None, managed=False) -> FieldStoredMeshLocation:
     """
     Get or create a stored mesh location field for storing locations in the
@@ -427,7 +536,7 @@ def get_or_create_field_stored_mesh_location(fieldmodule : Fieldmodule, mesh : M
     field = fieldmodule.findFieldByName(name)
     if field.isValid():
         meshLocationField = field.castStoredMeshLocation()
-        assert meshLocationField.isValid(), "opencmiss.utils.zinc.field.getOrCreateFieldStoredMeshLocation.  " \
+        assert meshLocationField.isValid(), "opencmiss.utils.zinc.field.get_or_create_field_stored_mesh_location.  " \
             "Existing field " + name + " is not StoredMeshLocation type"
         return meshLocationField
     with ZincCacheChanges(fieldmodule):
@@ -435,6 +544,40 @@ def get_or_create_field_stored_mesh_location(fieldmodule : Fieldmodule, mesh : M
         meshLocationField.setName(name)
         meshLocationField.setManaged(managed)
     return meshLocationField
+
+
+def create_field_stored_string(fieldmodule : Fieldmodule, name="name", managed=False) -> Field:
+    """
+    Creates a stored string field for defining names on nodes or datapoints.
+    New field is not managed by default.
+
+    :param fieldmodule:  Zinc fieldmodule to find or create field in.
+    :param name:  Name of field to find or create.
+    :param managed: Managed state of field if created here.
+    :return: Zinc Field.
+    """
+    with ZincCacheChanges(fieldmodule):
+        storedStringField = fieldmodule.createFieldStoredString()
+        storedStringField.setName(name)
+        storedStringField.setManaged(managed)
+    return storedStringField
+
+
+def get_or_create_field_stored_string(fieldmodule : Fieldmodule, name="name") -> Field:
+    """
+    Finds or creates a stored string field for defining names on nodes or
+    datapoints. Note can't use Field.castStoredString API as not released.
+    New field is managed.
+
+    :param fieldmodule:  Zinc fieldmodule to find or create field in.
+    :param name:  Name of field to find or create.
+    :return: Zinc Field.
+    """
+    field = fieldmodule.findFieldByName(name)
+    if field.isValid():
+        if field.getValueType() == Field.VALUE_TYPE_STRING:
+            return field
+    return create_field_stored_string(fieldmodule, name, managed=True)
 
 
 def get_unique_field_name(fieldmodule : Fieldmodule, baseName : str) -> str:
@@ -478,16 +621,24 @@ createFieldMeshIntegral = create_field_mesh_integral
 createFieldVolumeImage = create_field_volume_image
 createFieldPlaneVisibility = create_field_plane_visibility
 createFieldVisibilityForPlane = create_field_visibility_for_plane
-createFieldIsoScalar = create_field_iso_scalar
+createFieldIsoScalarForPlane = create_field_iso_scalar_for_plane
 createFieldImage = create_field_image
 createFieldCoordinates = create_field_coordinates
+createFieldFibres = create_field_fibres
 createFieldFiniteElement = create_field_finite_element
+createFieldStoredString = create_field_stored_string
+createFieldTextureCoordinates = create_field_texture_coordinates
 getGroupList = get_group_list
 getManagedFieldNames = get_managed_field_names
-getOrCreateFieldFiniteElement = get_or_create_field_finite_element
 getOrCreateFieldCoordinates = get_or_create_field_coordinates
+getOrCreateFieldFiniteElement = get_or_create_field_finite_element
+getOrCreateFieldFibres = get_or_create_field_fibres
+getOrCreateFieldGroup = get_or_create_field_group
 getOrCreateFieldStoredMeshLocation = get_or_create_field_stored_mesh_location
+getOrCreateFieldStoredString = get_or_create_field_stored_string
+getOrCreateFieldTextureCoordinates = get_or_create_field_texture_coordinates
 getUniqueFieldName = get_unique_field_name
+groupGetOrCreateNodesetGroup = group_get_or_create_nodeset_group
 orphanFieldOfName = orphan_field_of_name
 fieldIsManagedCoordinates = field_is_managed_coordinates
 fieldIsManagedGroup = field_is_managed_group
