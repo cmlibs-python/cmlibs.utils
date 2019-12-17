@@ -330,6 +330,7 @@ def get_element_node_identifiers_basis_order(element : Element, eft : Elementfie
     '''
     node_identifiers = []
     fn = 1
+    elementbasis = eft.getElementbasis()
     for n in range(eft.getElementbasis().getNumberOfNodes()):
         ln = eft.getTermLocalNodeIndex(fn, 1)
         node_identifiers.append(element.getNode(eft, ln).getIdentifier())
