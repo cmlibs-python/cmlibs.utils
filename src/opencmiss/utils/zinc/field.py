@@ -4,7 +4,7 @@ Utilities for creating and working with Zinc Fields.
 from opencmiss.utils.zinc.general import ZincCacheChanges
 from opencmiss.zinc.element import Mesh
 from opencmiss.zinc.field import Field, FieldFiniteElement, FieldGroup, \
-    FieldStoredMeshLocation
+    FieldNodeGroup, FieldStoredMeshLocation
 from opencmiss.zinc.fieldmodule import Fieldmodule
 from opencmiss.zinc.node import Nodeset, NodesetGroup
 from opencmiss.zinc.result import RESULT_OK
@@ -483,18 +483,19 @@ def get_or_create_field_group(fieldmodule : Fieldmodule, name : str) -> FieldGro
             return group
     return create_field_group(fieldmodule, name, managed=True)
 
-def group_get_or_create_nodeset_group(group : FieldGroup, nodeset : Nodeset) -> NodesetGroup:
+
+def get_or_create_field_node_group(group : FieldGroup, nodeset : Nodeset) -> FieldNodeGroup:
     '''
-    Gets or creates the NodesetGroup for the supplied nodeset in group.
+    Gets or creates the node group field for the supplied nodeset in group.
 
     :param group:  Zinc FieldGroup.
     :param nodeset:  A nodeset from group region to get or create subgroup of.
-    :return: Zinc NodesetGroup.
+    :return: Zinc FieldNodeGroup.
     '''
     nodeGroup = group.getFieldNodeGroup(nodeset)
     if not nodeGroup.isValid():
         nodeGroup = group.createFieldNodeGroup(nodeset)
-    return nodeGroup.getNodesetGroup()
+    return nodeGroup
 
 
 def create_field_texture_coordinates(fieldmodule : Fieldmodule, name="texture coordinates", components_count=3, managed=False)\
@@ -634,11 +635,11 @@ getOrCreateFieldCoordinates = get_or_create_field_coordinates
 getOrCreateFieldFiniteElement = get_or_create_field_finite_element
 getOrCreateFieldFibres = get_or_create_field_fibres
 getOrCreateFieldGroup = get_or_create_field_group
+getOrCreateFieldNodeGroup = get_or_create_field_node_group
 getOrCreateFieldStoredMeshLocation = get_or_create_field_stored_mesh_location
 getOrCreateFieldStoredString = get_or_create_field_stored_string
 getOrCreateFieldTextureCoordinates = get_or_create_field_texture_coordinates
 getUniqueFieldName = get_unique_field_name
-groupGetOrCreateNodesetGroup = group_get_or_create_nodeset_group
 orphanFieldOfName = orphan_field_of_name
 fieldIsManagedCoordinates = field_is_managed_coordinates
 fieldIsManagedGroup = field_is_managed_group
