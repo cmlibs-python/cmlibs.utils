@@ -43,9 +43,11 @@ class ZincUtilsTestCase(unittest.TestCase):
         groupName = "bob"
         group = getOrCreateFieldGroup(fieldmodule, groupName)
         self.assertTrue(group.isValid())
+        self.assertTrue(group.isManaged())
         nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
         nodeGroup = getOrCreateFieldNodeGroup(group, nodes)
         self.assertTrue(nodeGroup.isValid())
+        self.assertFalse(nodeGroup.isManaged())
         nodeGroupName = groupName + "." + nodes.getName()
         self.assertEqual(nodeGroupName, nodeGroup.getName())
 

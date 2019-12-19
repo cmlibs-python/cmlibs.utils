@@ -2,7 +2,7 @@
 Utilities for creating and working with Zinc Finite Elements.
 """
 from opencmiss.utils.maths import vectorops
-from opencmiss.utils.zinc.general import ZincCacheChanges
+from opencmiss.utils.zinc.general import ChangeManager
 from opencmiss.zinc.element import Element, Elementbasis, Elementfieldtemplate, Mesh
 from opencmiss.zinc.field import Field, FieldFiniteElement
 from opencmiss.zinc.fieldmodule import Fieldmodule
@@ -27,7 +27,7 @@ def create_triangle_elements(mesh: Mesh, finite_element_field: Field, element_no
     linear_basis = fieldmodule.createElementbasis(2, Elementbasis.FUNCTION_TYPE_LINEAR_SIMPLEX)
     eft = mesh.createElementfieldtemplate(linear_basis);
     element_template.defineField(finite_element_field, -1, eft)
-    with ZincCacheChanges(fieldmodule):
+    with ChangeManager(fieldmodule):
         for element_nodes in element_node_set:
             element = mesh.createElement(-1, element_template)
             element.setNodesByIdentifier(eft, element_nodes)
@@ -58,7 +58,7 @@ def create_cube_element(mesh: Mesh, finite_element_field: Field, node_coordinate
     eft = mesh.createElementfieldtemplate(linear_basis)
     element_template.defineField(finite_element_field, -1, eft)
     field_cache = fieldmodule.createFieldcache()
-    with ZincCacheChanges(fieldmodule):
+    with ChangeManager(fieldmodule):
         node_identifiers = []
         for node_coordinate in node_coordinate_set:
             node = nodeset.createNode(-1, node_template)
@@ -94,7 +94,7 @@ def create_square_element(mesh: Mesh, finite_element_field: Field, node_coordina
     eft = mesh.createElementfieldtemplate(linear_basis);
     element_template.defineField(finite_element_field, -1, eft)
     field_cache = fieldmodule.createFieldcache()
-    with ZincCacheChanges(fieldmodule):
+    with ChangeManager(fieldmodule):
         node_identifiers = []
         for node_coordinate in node_coordinate_set:
             node = nodeset.createNode(-1, node_template)
@@ -178,7 +178,7 @@ def evaluate_field_nodeset_range(field: Field, nodeset: Nodeset):
     """
     fieldmodule = nodeset.getFieldmodule()
     components_count = field.getNumberOfComponents()
-    with ZincCacheChanges(fieldmodule):
+    with ChangeManager(fieldmodule):
         min_field = fieldmodule.createFieldNodesetMinimum(field, nodeset)
         max_field = fieldmodule.createFieldNodesetMaximum(field, nodeset)
         fieldcache = fieldmodule.createFieldcache()
@@ -198,7 +198,7 @@ def evaluate_field_nodeset_mean(field: Field, nodeset: Nodeset):
     """
     fieldmodule = nodeset.getFieldmodule()
     components_count = field.getNumberOfComponents()
-    with ZincCacheChanges(fieldmodule):
+    with ChangeManager(fieldmodule):
         mean_field = fieldmodule.createFieldNodesetMean(field, nodeset)
         fieldcache = fieldmodule.createFieldcache()
         result, mean_values = mean_field.evaluateReal(fieldcache, components_count)
