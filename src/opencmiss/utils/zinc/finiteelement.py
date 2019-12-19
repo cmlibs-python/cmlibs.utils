@@ -205,7 +205,6 @@ def evaluate_field_nodeset_mean(field: Field, nodeset: Nodeset):
         assert result == RESULT_OK
         del mean_field
         del fieldcache
-    assert result == RESULT_OK
     return mean_values
 
 
