@@ -1,10 +1,10 @@
 import math
 import os
 import unittest
-from opencmiss.utils.zinc.field import createFieldMeshIntegral, getOrCreateFieldCoordinates
+from opencmiss.utils.zinc.field import createFieldMeshIntegral, findOrCreateFieldCoordinates, \
+    findOrCreateFieldGroup, findOrCreateFieldNodeGroup
 from opencmiss.utils.zinc.finiteelement import createCubeElement, createSquareElement, createNodes, \
-    createTriangleElements, \
-    evaluateNodesetMeanCoordinates
+    createTriangleElements, evaluateFieldNodesetMean
 from opencmiss.zinc.context import Context
 from opencmiss.zinc.field import Field
 from opencmiss.zinc.result import RESULT_OK
@@ -20,27 +20,45 @@ def assertAlmostEqualList(testcase, actualList, expectedList, delta):
 
 class ZincUtilsTestCase(unittest.TestCase):
 
-    def test_field(self):
+    def test_field_coordinates(self):
         """
-        Test zinc finite element utilities.
+        Test creation of finite element coordinates field.
         """
-        context = Context("test_zincfiniteelement");
+        context = Context("test");
         region = context.createRegion()
         fieldmodule = region.getFieldmodule()
-        coordinates = getOrCreateFieldCoordinates(fieldmodule)
+        coordinates = findOrCreateFieldCoordinates(fieldmodule)
         self.assertTrue(coordinates.isValid())
         self.assertEqual(3, coordinates.getNumberOfComponents())
         self.assertTrue(coordinates.isManaged())
         self.assertTrue(coordinates.isTypeCoordinate())
 
+    def test_field_group(self):
+        """
+        Test creation of group fields.
+        """
+        context = Context("test");
+        region = context.createRegion()
+        fieldmodule = region.getFieldmodule()
+        groupName = "bob"
+        group = findOrCreateFieldGroup(fieldmodule, groupName)
+        self.assertTrue(group.isValid())
+        self.assertTrue(group.isManaged())
+        nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+        nodeGroup = findOrCreateFieldNodeGroup(group, nodes)
+        self.assertTrue(nodeGroup.isValid())
+        self.assertFalse(nodeGroup.isManaged())
+        nodeGroupName = groupName + "." + nodes.getName()
+        self.assertEqual(nodeGroupName, nodeGroup.getName())
+
     def test_create_nodes_and_elements(self):
         """
         Test zinc finite element utilities.
         """
-        context = Context("test_zincfiniteelement");
+        context = Context("test");
         region = context.createRegion()
         fieldmodule = region.getFieldmodule()
-        coordinates = getOrCreateFieldCoordinates(fieldmodule)
+        coordinates = findOrCreateFieldCoordinates(fieldmodule)
 
         nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
         mesh1d = fieldmodule.findMeshByDimension(1)
@@ -48,7 +66,7 @@ class ZincUtilsTestCase(unittest.TestCase):
         nodeCoordinates4 = [[0.1, 0.2, 0.3], [1.1, 0.2, 0.4], [0.1, 1.2, 0.4], [1.1, 1.2, 0.3]]
         createNodes(coordinates, nodeCoordinates4, node_set=nodes)
         self.assertEqual(4, nodes.getSize())
-        meanCoordinates = evaluateNodesetMeanCoordinates(coordinates, nodes)
+        meanCoordinates = evaluateFieldNodesetMean(coordinates, nodes)
         assertAlmostEqualList(self, [0.6, 0.7, 0.35], meanCoordinates, delta=1.0E-7)
 
         createTriangleElements(mesh2d, coordinates, [[1, 2, 3], [3, 2, 4]])
@@ -62,14 +80,14 @@ class ZincUtilsTestCase(unittest.TestCase):
 
         region = context.createRegion()
         fieldmodule = region.getFieldmodule()
-        coordinates = getOrCreateFieldCoordinates(fieldmodule)
+        coordinates = findOrCreateFieldCoordinates(fieldmodule)
         nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
         mesh1d = fieldmodule.findMeshByDimension(1)
         mesh2d = fieldmodule.findMeshByDimension(2)
         nodeCoordinates4 = [[0.1, 0.2, 0.3], [1.1, 0.2, 0.4], [0.1, 1.2, 0.4], [1.1, 1.2, 0.3]]
         createSquareElement(mesh2d, coordinates, nodeCoordinates4)
         self.assertEqual(4, nodes.getSize())
-        meanCoordinates = evaluateNodesetMeanCoordinates(coordinates, nodes)
+        meanCoordinates = evaluateFieldNodesetMean(coordinates, nodes)
         assertAlmostEqualList(self, [0.6, 0.7, 0.35], meanCoordinates, delta=1.0E-7)
         self.assertEqual(1, mesh2d.getSize())
         self.assertEqual(4, mesh1d.getSize())
@@ -81,7 +99,7 @@ class ZincUtilsTestCase(unittest.TestCase):
 
         region = context.createRegion()
         fieldmodule = region.getFieldmodule()
-        coordinates = getOrCreateFieldCoordinates(fieldmodule)
+        coordinates = findOrCreateFieldCoordinates(fieldmodule)
         nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
         mesh1d = fieldmodule.findMeshByDimension(1)
         mesh2d = fieldmodule.findMeshByDimension(2)
@@ -90,7 +108,7 @@ class ZincUtilsTestCase(unittest.TestCase):
                             [0.1, 0.2, 1.3], [1.1, 0.2, 1.2], [0.1, 1.2, 1.2], [1.1, 1.2, 1.3]]
         createCubeElement(mesh3d, coordinates, nodeCoordinates8)
         self.assertEqual(8, nodes.getSize())
-        meanCoordinates = evaluateNodesetMeanCoordinates(coordinates, nodes)
+        meanCoordinates = evaluateFieldNodesetMean(coordinates, nodes)
         assertAlmostEqualList(self, [0.6, 0.7, 0.8], meanCoordinates, delta=1.0E-7)
         self.assertEqual(1, mesh3d.getSize())
         self.assertEqual(6, mesh2d.getSize())

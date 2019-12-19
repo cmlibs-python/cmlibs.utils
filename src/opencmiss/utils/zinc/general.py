@@ -37,12 +37,13 @@ class AbstractNodeDataObject(object):
         self._time_sequence_field_names = time_sequence_field_names
 
 
-class ZincCacheChanges:
+class ChangeManager:
     """
-    Context manager for ensuring beginChange, endChange always called on
-    supplied object, even with exceptions.
+    Python Context Manager minimising change messages for a Zinc object,
+    for use whenever making multiple changes to the object or objects it owns.
+    Ensures beginChange, endChange are always called, even with exceptions.
     Usage:
-    with ZincCacheChanges(object):
+    with ChangeManager(object):
         # make multiple changes to object or objects it owns
     """
 
@@ -60,7 +61,11 @@ class ZincCacheChanges:
         self._object.endChange()
 
 
-def define_standard_visualisation_tools(context: Context):
+def define_standard_graphics_objects(context: Context):
+    """
+    Defines Zinc standard objects for use in graphics, including
+    a number of graphical materials and glyphs.
+    """
     glyphmodule = context.getGlyphmodule()
     glyphmodule.defineStandardGlyphs()
     materialmodule = context.getMaterialmodule()
@@ -117,5 +122,5 @@ def create_node(field_module, data_object, identifier=-1, node_set_name='nodes',
     return node.getIdentifier()
 
 
-defineStandardVisualisationTools = define_standard_visualisation_tools
+defineStandardGraphicsObjects = define_standard_graphics_objects
 createNode = create_node
