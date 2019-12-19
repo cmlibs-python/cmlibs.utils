@@ -1,8 +1,8 @@
 import math
 import os
 import unittest
-from opencmiss.utils.zinc.field import createFieldMeshIntegral, getOrCreateFieldCoordinates, \
-    getOrCreateFieldGroup, getOrCreateFieldNodeGroup
+from opencmiss.utils.zinc.field import createFieldMeshIntegral, findOrCreateFieldCoordinates, \
+    findOrCreateFieldGroup, findOrCreateFieldNodeGroup
 from opencmiss.utils.zinc.finiteelement import createCubeElement, createSquareElement, createNodes, \
     createTriangleElements, evaluateFieldNodesetMean
 from opencmiss.zinc.context import Context
@@ -27,7 +27,7 @@ class ZincUtilsTestCase(unittest.TestCase):
         context = Context("test");
         region = context.createRegion()
         fieldmodule = region.getFieldmodule()
-        coordinates = getOrCreateFieldCoordinates(fieldmodule)
+        coordinates = findOrCreateFieldCoordinates(fieldmodule)
         self.assertTrue(coordinates.isValid())
         self.assertEqual(3, coordinates.getNumberOfComponents())
         self.assertTrue(coordinates.isManaged())
@@ -41,11 +41,11 @@ class ZincUtilsTestCase(unittest.TestCase):
         region = context.createRegion()
         fieldmodule = region.getFieldmodule()
         groupName = "bob"
-        group = getOrCreateFieldGroup(fieldmodule, groupName)
+        group = findOrCreateFieldGroup(fieldmodule, groupName)
         self.assertTrue(group.isValid())
         self.assertTrue(group.isManaged())
         nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
-        nodeGroup = getOrCreateFieldNodeGroup(group, nodes)
+        nodeGroup = findOrCreateFieldNodeGroup(group, nodes)
         self.assertTrue(nodeGroup.isValid())
         self.assertFalse(nodeGroup.isManaged())
         nodeGroupName = groupName + "." + nodes.getName()
@@ -58,7 +58,7 @@ class ZincUtilsTestCase(unittest.TestCase):
         context = Context("test");
         region = context.createRegion()
         fieldmodule = region.getFieldmodule()
-        coordinates = getOrCreateFieldCoordinates(fieldmodule)
+        coordinates = findOrCreateFieldCoordinates(fieldmodule)
 
         nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
         mesh1d = fieldmodule.findMeshByDimension(1)
@@ -80,7 +80,7 @@ class ZincUtilsTestCase(unittest.TestCase):
 
         region = context.createRegion()
         fieldmodule = region.getFieldmodule()
-        coordinates = getOrCreateFieldCoordinates(fieldmodule)
+        coordinates = findOrCreateFieldCoordinates(fieldmodule)
         nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
         mesh1d = fieldmodule.findMeshByDimension(1)
         mesh2d = fieldmodule.findMeshByDimension(2)
@@ -99,7 +99,7 @@ class ZincUtilsTestCase(unittest.TestCase):
 
         region = context.createRegion()
         fieldmodule = region.getFieldmodule()
-        coordinates = getOrCreateFieldCoordinates(fieldmodule)
+        coordinates = findOrCreateFieldCoordinates(fieldmodule)
         nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
         mesh1d = fieldmodule.findMeshByDimension(1)
         mesh2d = fieldmodule.findMeshByDimension(2)

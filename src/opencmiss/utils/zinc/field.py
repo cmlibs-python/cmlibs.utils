@@ -231,33 +231,30 @@ def create_field_plane_visibility(fieldmodule, finite_element_field, plane_norma
     return v
 
 
-def create_field_visibility_for_plane(region, coordinate_field, plane):
+def create_field_visibility_for_plane(fieldmodule : Fieldmodule, coordinate_field, plane):
     """
     Create a
-    :param region:
+    :param fieldmodule: Fieldmodule to own new field.
     :param coordinate_field:
     :param plane:
     :return:
     """
-    fieldmodule = region.getFieldmodule()
-    fieldmodule.beginChange()
-    normal_field = plane.getNormalField()
-    rotation_point_field = plane.getRotationPointField()
-    visibility_field = create_field_plane_visibility(fieldmodule, coordinate_field, normal_field, rotation_point_field)
-    fieldmodule.endChange()
-
+    with ChangeManager(fieldmodule):
+        normal_field = plane.getNormalField()
+        rotation_point_field = plane.getRotationPointField()
+        visibility_field = create_field_plane_visibility(fieldmodule, coordinate_field, normal_field, rotation_point_field)
     return visibility_field
 
 
-def create_field_iso_scalar_for_plane(region, coordinate_field, plane):
-    fieldmodule = region.getFieldmodule()
-    fieldmodule.beginChange()
-    normal_field = plane.getNormalField()
-    rotation_point_field = plane.getRotationPointField()
-    iso_scalar_field = _create_plane_equation_formulation(fieldmodule, coordinate_field, normal_field,
-                                                          rotation_point_field)
-    fieldmodule.endChange()
-
+def create_field_iso_scalar_for_plane(fieldmodule : Fieldmodule, coordinate_field, plane):
+    """
+    :param fieldmodule: Fieldmodule to own new field.
+    """
+    with ChangeManager(fieldmodule):
+        normal_field = plane.getNormalField()
+        rotation_point_field = plane.getRotationPointField()
+        iso_scalar_field = _create_plane_equation_formulation(fieldmodule, coordinate_field, normal_field,
+                                                              rotation_point_field)
     return iso_scalar_field
 
 
@@ -363,7 +360,7 @@ def create_field_finite_element_clone(sourceField : Field, name : str, managed=F
     return field
 
 
-def get_or_create_field_finite_element(fieldmodule: Fieldmodule, name: str, components_count: int,
+def find_or_create_field_finite_element(fieldmodule: Fieldmodule, name: str, components_count: int,
                                        component_names=None, managed=False, type_coordinate=False)\
         -> FieldFiniteElement:
     """
@@ -377,10 +374,10 @@ def get_or_create_field_finite_element(fieldmodule: Fieldmodule, name: str, comp
     :param type_coordinate: Default value of flag indicating field gives geometric coordinates.
     :return: Zinc FieldFiniteElement, invalid if error.
     """
-    assert (components_count > 0), "opencmiss.utils.zinc.field.get_or_create_field_finite_element." \
+    assert (components_count > 0), "opencmiss.utils.zinc.field.find_or_create_field_finite_element." \
                                    "  Invalid components_count"
     assert (not component_names) or (len(component_names) == components_count),\
-        "opencmiss.utils.zinc.field.get_or_create_field_finite_element.  Invalid component_names"
+        "opencmiss.utils.zinc.field.find_or_create_field_finite_element.  Invalid component_names"
     if field_exists(fieldmodule, name, components_count=components_count):
         field = fieldmodule.findFieldByName(name)
         return field.castFiniteElement()
@@ -400,7 +397,7 @@ def create_field_coordinates(fieldmodule : Fieldmodule, name="coordinates", comp
                                        component_names=("x", "y", "z"), managed=managed, type_coordinate=True)
 
 
-def get_or_create_field_coordinates(fieldmodule : Fieldmodule, name="coordinates", components_count=3, managed=True) \
+def find_or_create_field_coordinates(fieldmodule : Fieldmodule, name="coordinates", components_count=3, managed=True) \
         -> FieldFiniteElement:
     """
     Get or create RC coordinates finite element field of supplied name with
@@ -408,7 +405,7 @@ def get_or_create_field_coordinates(fieldmodule : Fieldmodule, name="coordinates
     New field is managed by default.
     """
     assert 1 <= components_count <= 3
-    return get_or_create_field_finite_element(fieldmodule, name, components_count,
+    return find_or_create_field_finite_element(fieldmodule, name, components_count,
                                               component_names=("x", "y", "z"), managed=managed, type_coordinate=True)
 
 
@@ -433,7 +430,7 @@ def create_field_fibres(fieldmodule : Fieldmodule, name="fibres", components_cou
     return fibres
 
 
-def get_or_create_field_fibres(fieldmodule : Fieldmodule, name="fibres", components_count=3, managed=True) \
+def find_or_create_field_fibres(fieldmodule : Fieldmodule, name="fibres", components_count=3, managed=True) \
         -> FieldFiniteElement:
     """
     Finds or creates a finite element fibre field.
@@ -470,7 +467,7 @@ def create_field_group(fieldmodule : Fieldmodule, name : str, managed=False) -> 
     return group
 
 
-def get_or_create_field_group(fieldmodule : Fieldmodule, name : str, managed=True) -> FieldGroup:
+def find_or_create_field_group(fieldmodule : Fieldmodule, name : str, managed=True) -> FieldGroup:
     """
     Finds or creates a Group field of the supplied name.
     New field is managed by default.
@@ -487,7 +484,7 @@ def get_or_create_field_group(fieldmodule : Fieldmodule, name : str, managed=Tru
     return create_field_group(fieldmodule, name, managed=managed)
 
 
-def get_or_create_field_node_group(group : FieldGroup, nodeset : Nodeset) -> FieldNodeGroup:
+def find_or_create_field_node_group(group : FieldGroup, nodeset : Nodeset) -> FieldNodeGroup:
     '''
     Gets or creates the node group field for the supplied nodeset in group.
     Field is managed by its parent group field.
@@ -513,7 +510,7 @@ def create_field_texture_coordinates(fieldmodule : Fieldmodule, name="texture co
                                        component_names=("u", "v", "w"), managed=managed, type_coordinate=True)
 
 
-def get_or_create_field_texture_coordinates(fieldmodule : Fieldmodule, name="texture coordinates", components_count=3, managed=True)\
+def find_or_create_field_texture_coordinates(fieldmodule : Fieldmodule, name="texture coordinates", components_count=3, managed=True)\
         -> FieldFiniteElement:
     """
     Create texture coordinates finite element field of supplied name with
@@ -521,7 +518,7 @@ def get_or_create_field_texture_coordinates(fieldmodule : Fieldmodule, name="tex
     New field is managed by default.
     """
     assert 1 <= components_count <= 3
-    return get_or_create_field_finite_element(fieldmodule, name, components_count,
+    return find_or_create_field_finite_element(fieldmodule, name, components_count,
                                               component_names=("u", "v", "w"), managed=managed, type_coordinate=True)
 
 
@@ -546,7 +543,7 @@ def create_field_stored_mesh_location(fieldmodule : Fieldmodule, mesh : Mesh, na
     return meshLocationField
 
 
-def get_or_create_field_stored_mesh_location(fieldmodule : Fieldmodule, mesh : Mesh, name=None, managed=True) -> FieldStoredMeshLocation:
+def find_or_create_field_stored_mesh_location(fieldmodule : Fieldmodule, mesh : Mesh, name=None, managed=True) -> FieldStoredMeshLocation:
     """
     Get or create a stored mesh location field for storing locations in the
     supplied mesh, used for storing data projections.
@@ -585,7 +582,7 @@ def create_field_stored_string(fieldmodule : Fieldmodule, name="name", managed=F
     return storedStringField
 
 
-def get_or_create_field_stored_string(fieldmodule : Fieldmodule, name="name", managed=True) -> Field:
+def find_or_create_field_stored_string(fieldmodule : Fieldmodule, name="name", managed=True) -> Field:
     """
     Finds or creates a stored string field for defining names on nodes or
     datapoints. Note can't use Field.castStoredString API as not released.
@@ -654,14 +651,14 @@ createFieldStoredString = create_field_stored_string
 createFieldTextureCoordinates = create_field_texture_coordinates
 getGroupList = get_group_list
 getManagedFieldNames = get_managed_field_names
-getOrCreateFieldCoordinates = get_or_create_field_coordinates
-getOrCreateFieldFiniteElement = get_or_create_field_finite_element
-getOrCreateFieldFibres = get_or_create_field_fibres
-getOrCreateFieldGroup = get_or_create_field_group
-getOrCreateFieldNodeGroup = get_or_create_field_node_group
-getOrCreateFieldStoredMeshLocation = get_or_create_field_stored_mesh_location
-getOrCreateFieldStoredString = get_or_create_field_stored_string
-getOrCreateFieldTextureCoordinates = get_or_create_field_texture_coordinates
+findOrCreateFieldCoordinates = find_or_create_field_coordinates
+findOrCreateFieldFiniteElement = find_or_create_field_finite_element
+findOrCreateFieldFibres = find_or_create_field_fibres
+findOrCreateFieldGroup = find_or_create_field_group
+findOrCreateFieldNodeGroup = find_or_create_field_node_group
+findOrCreateFieldStoredMeshLocation = find_or_create_field_stored_mesh_location
+findOrCreateFieldStoredString = find_or_create_field_stored_string
+findOrCreateFieldTextureCoordinates = find_or_create_field_texture_coordinates
 getUniqueFieldName = get_unique_field_name
 orphanFieldByName = orphan_field_by_name
 fieldIsManagedCoordinates = field_is_managed_coordinates
