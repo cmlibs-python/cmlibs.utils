@@ -325,7 +325,7 @@ def get_managed_field_names(fieldmodule):
     return field_names
 
 
-def field_exists(fieldmodule: Fieldmodule, field_name: str, field_type='finiteelement', components_count=3) -> bool:
+def field_exists(fieldmodule: Fieldmodule, field_name: str, field_type, components_count) -> bool:
     """
     Tests to determine if the field with the given name exists in the given field module.
 
@@ -338,8 +338,8 @@ def field_exists(fieldmodule: Fieldmodule, field_name: str, field_type='finiteel
     """
     field = fieldmodule.findFieldByName(field_name)
     if field.isValid():
-        if field_type == 'finiteelement':
-            field = field.castFiniteElement()
+        if hasattr(field, 'cast' + field_type):
+            field = getattr(field, 'cast' + field_type)()
             return field.isValid() and field.getNumberOfComponents() == components_count
 
         return field.getNumberOfComponents() == components_count
@@ -348,15 +348,15 @@ def field_exists(fieldmodule: Fieldmodule, field_name: str, field_type='finiteel
 
 
 def create_field_finite_element(fieldmodule: Fieldmodule, field_name: str, components_count: int,
-                                component_names=None, managed=False, type_coordinate=False)-> FieldFiniteElement:
+                                component_names=None, managed=False, type_coordinate=False) -> FieldFiniteElement:
     with ZincCacheChanges(fieldmodule):
         field = fieldmodule.createFieldFiniteElement(components_count)
         field.setName(field_name)
         field.setManaged(managed)
         field.setTypeCoordinate(type_coordinate)
-        if component_names:
-            for c in range(components_count):
-                field.setComponentName(c + 1, component_names[c])
+        if component_names is not None:
+            for index, component_name in enumerate(component_names[:components_count]):
+                field.setComponentName(index + 1, component_name)
 
     return field
 
@@ -380,7 +380,7 @@ def get_or_create_field_finite_element(fieldmodule: Fieldmodule, field_name: str
                                    "  Invalid components_count"
     assert (not component_names) or (len(component_names) == components_count),\
         "opencmiss.utils.zinc.field.get_or_create_field_finite_element.  Invalid component_names"
-    if field_exists(fieldmodule, field_name, components_count=components_count):
+    if field_exists(fieldmodule, field_name, 'FiniteElement', components_count):
         field = fieldmodule.findFieldByName(field_name)
         return field.castFiniteElement()
 
@@ -411,7 +411,8 @@ def get_or_create_field_coordinates(fieldmodule : Fieldmodule, name="coordinates
                                               component_names=("x", "y", "z"), managed=True, type_coordinate=True)
 
 
-def get_or_create_field_stored_mesh_location(fieldmodule : Fieldmodule, mesh : Mesh, name=None, managed=False) -> FieldStoredMeshLocation:
+def get_or_create_field_stored_mesh_location(fieldmodule: Fieldmodule, mesh: Mesh, name=None, managed=False)\
+        -> FieldStoredMeshLocation:
     """
     Get or create a stored mesh location field for storing locations in the
     supplied mesh, used for storing data projections.
@@ -423,12 +424,10 @@ def get_or_create_field_stored_mesh_location(fieldmodule : Fieldmodule, mesh : M
     :param managed: Managed state of field if created here.
     """
     if not name:
-        name="location_" + mesh.getName()
+        name = "location_" + mesh.getName()
     field = fieldmodule.findFieldByName(name)
-    if field.isValid():
+    if field_exists(fieldmodule, name, 'StoredMeshLocation', mesh.getDimension()):
         meshLocationField = field.castStoredMeshLocation()
-        assert meshLocationField.isValid(), "opencmiss.utils.zinc.field.getOrCreateFieldStoredMeshLocation.  " \
-            "Existing field " + name + " is not StoredMeshLocation type"
         return meshLocationField
     with ZincCacheChanges(fieldmodule):
         meshLocationField = fieldmodule.createFieldStoredMeshLocation(mesh)
@@ -437,7 +436,7 @@ def get_or_create_field_stored_mesh_location(fieldmodule : Fieldmodule, mesh : M
     return meshLocationField
 
 
-def get_unique_field_name(fieldmodule : Fieldmodule, baseName : str) -> str:
+def get_unique_field_name(fieldmodule: Fieldmodule, baseName: str) -> str:
     """
     Return a unique field name in fieldmodule either equal to baseName or
     appending a number starting at 1 and increasing.
