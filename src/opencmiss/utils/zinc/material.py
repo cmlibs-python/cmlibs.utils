@@ -2,7 +2,7 @@
 Utilities for working with Zinc graphics materials.
 """
 
-from opencmiss.utils.zinc.general import ZincCacheChanges
+from opencmiss.utils.zinc.general import ChangeManager
 from opencmiss.zinc.field import Field
 from opencmiss.zinc.material import Material
 from opencmiss.zinc.region import Region
@@ -22,7 +22,7 @@ def create_material_using_image_field(region: Region, image_field: Field, colour
     scene = region.getScene()
     materialmodule = scene.getMaterialmodule()
     spectrummodule = scene.getSpectrummodule()
-    with ZincCacheChanges(materialmodule), ZincCacheChanges(spectrummodule):
+    with ChangeManager(materialmodule), ChangeManager(spectrummodule):
         material = materialmodule.createMaterial()
         spectrum = spectrummodule.createSpectrum()
         component = spectrum.createSpectrumcomponent()
