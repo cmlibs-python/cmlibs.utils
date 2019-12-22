@@ -8,7 +8,8 @@ from opencmiss.zinc.material import Material
 from opencmiss.zinc.region import Region
 
 
-def create_material_using_image_field(region: Region, image_field: Field, colour_mapping_type=None, image_range=None) -> Material:
+def create_material_using_image_field(region: Region, image_field: Field, colour_mapping_type=None, image_range=None)\
+        -> Material:
     """
     Use an image field in a material to create an OpenGL texture.  Returns the
     created material.

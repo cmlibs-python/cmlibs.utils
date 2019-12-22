@@ -47,11 +47,11 @@ class ChangeManager:
         # make multiple changes to object or objects it owns
     """
 
-    def __init__(self, object):
+    def __init__(self, change_object):
         """
-        :param object: Zinc object with beginChange/endChange methods.
+        :param change_object: Zinc object with beginChange/endChange methods.
         """
-        self._object = object
+        self._object = change_object
 
     def __enter__(self):
         self._object.beginChange()

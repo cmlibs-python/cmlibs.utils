@@ -4,8 +4,7 @@ Utilities for creating and working with Zinc Finite Elements.
 from opencmiss.utils.maths import vectorops
 from opencmiss.utils.zinc.general import ChangeManager
 from opencmiss.zinc.element import Element, Elementbasis, Elementfieldtemplate, Mesh
-from opencmiss.zinc.field import Field, FieldFiniteElement
-from opencmiss.zinc.fieldmodule import Fieldmodule
+from opencmiss.zinc.field import Field
 from opencmiss.zinc.node import Node, Nodeset
 from opencmiss.zinc.result import RESULT_OK
 
@@ -25,7 +24,7 @@ def create_triangle_elements(mesh: Mesh, finite_element_field: Field, element_no
     element_template = mesh.createElementtemplate()
     element_template.setElementShapeType(Element.SHAPE_TYPE_TRIANGLE)
     linear_basis = fieldmodule.createElementbasis(2, Elementbasis.FUNCTION_TYPE_LINEAR_SIMPLEX)
-    eft = mesh.createElementfieldtemplate(linear_basis);
+    eft = mesh.createElementfieldtemplate(linear_basis)
     element_template.defineField(finite_element_field, -1, eft)
     with ChangeManager(fieldmodule):
         for element_nodes in element_node_set:
@@ -40,7 +39,6 @@ def create_cube_element(mesh: Mesh, finite_element_field: Field, node_coordinate
     finite element field and sequence of 8 n-D node coordinates.
 
     :param mesh: The Zinc Mesh to create elements in.
-    :param fieldmodule: Owning fieldmodule for new elements and nodes.
     :param finite_element_field:  Zinc FieldFiniteElement to interpolate on element.
     :param node_coordinate_set: Sequence of 8 coordinates each with as many components as finite element field.
     :return: None
@@ -76,7 +74,6 @@ def create_square_element(mesh: Mesh, finite_element_field: Field, node_coordina
     finite element field and sequence of 4 n-D node coordinates.
 
     :param mesh: The Zinc Mesh to create elements in.
-    :param fieldmodule: Owning fieldmodule for new elements and nodes.
     :param finite_element_field:  Zinc FieldFiniteElement to interpolate on element.
     :param node_coordinate_set: Sequence of 4 coordinates each with as many components as finite element field.
     :return: None
@@ -91,7 +88,7 @@ def create_square_element(mesh: Mesh, finite_element_field: Field, node_coordina
     element_template = mesh.createElementtemplate()
     element_template.setElementShapeType(Element.SHAPE_TYPE_SQUARE)
     linear_basis = fieldmodule.createElementbasis(2, Elementbasis.FUNCTION_TYPE_LINEAR_LAGRANGE)
-    eft = mesh.createElementfieldtemplate(linear_basis);
+    eft = mesh.createElementfieldtemplate(linear_basis)
     element_template.defineField(finite_element_field, -1, eft)
     field_cache = fieldmodule.createFieldcache()
     with ChangeManager(fieldmodule):
@@ -106,70 +103,70 @@ def create_square_element(mesh: Mesh, finite_element_field: Field, node_coordina
     fieldmodule.defineAllFaces()
 
 
-def find_node_with_name(nodeset: Nodeset, nameField: Field, name):
+def find_node_with_name(nodeset: Nodeset, name_field: Field, name):
     """
     Get single node in nodeset with supplied name.
     :param nodeset: Zinc Nodeset or NodesetGroup to search.
-    :param nameField: The name field to match.
+    :param name_field: The name field to match.
     :param name: The name to match in nameField.
     :return: Node with name, or None if 0 or multiple nodes with name.
     """
     fieldmodule = nodeset.getFieldmodule()
     fieldcache = fieldmodule.createFieldcache()
     nodeiter = nodeset.createNodeiterator()
-    nodeWithName = None
+    node_with_name = None
     node = nodeiter.next()
     while node.isValid():
         fieldcache.setNode(node)
-        tempName = nameField.evaluateString(fieldcache)
-        if tempName == name:
-            if nodeWithName:
+        temp_name = name_field.evaluateString(fieldcache)
+        if temp_name == name:
+            if node_with_name:
                 return None
-            nodeWithName = node
+            node_with_name = node
         node = nodeiter.next()
-    return nodeWithName
+    return node_with_name
 
 
-def get_node_name_centres(nodeset: Nodeset, coordinatesField: Field, nameField: Field):
+def get_node_name_centres(nodeset: Nodeset, coordinates_field: Field, name_field: Field):
     """
     Find mean locations of node coordinate with the same names.
     :param nodeset: Zinc Nodeset or NodesetGroup to search.
-    :param coordinatesField: The coordinate field to evaluate.
-    :param nameField: The name field to match.
+    :param coordinates_field: The coordinate field to evaluate.
+    :param name_field: The name field to match.
     :return: Dict of names -> coordinates.
     """
-    componentsCount = coordinatesField.getNumberOfComponents()
+    components_count = coordinates_field.getNumberOfComponents()
     fieldmodule = nodeset.getFieldmodule()
     fieldcache = fieldmodule.createFieldcache()
-    nameRecords = {}  # name -> (coordinates, count)
+    name_records = {}  # name -> (coordinates, count)
     nodeiter = nodeset.createNodeiterator()
     node = nodeiter.next()
     while node.isValid():
         fieldcache.setNode(node)
-        name = nameField.evaluateString(fieldcache)
-        coordinatesResult, coordinates = coordinatesField.evaluateReal(fieldcache, componentsCount)
-        if name and (coordinatesResult == RESULT_OK):
-            nameRecord = nameRecords.get(name)
-            if nameRecord:
-                nameCentre = nameRecord[0]
-                for c in range(componentsCount):
-                    nameCentre[c] += coordinates[c]
-                nameRecord[1] += 1
+        name = name_field.evaluateString(fieldcache)
+        coordinates_result, coordinates = coordinates_field.evaluateReal(fieldcache, components_count)
+        if name and (coordinates_result == RESULT_OK):
+            name_record = name_records.get(name)
+            if name_record:
+                name_centre = name_record[0]
+                for c in range(components_count):
+                    name_centre[c] += coordinates[c]
+                name_record[1] += 1
             else:
-                nameRecords[name] = (coordinates, 1)
+                name_records[name] = (coordinates, 1)
         node = nodeiter.next()
     # divide centre coordinates by count
-    nameCentres = {}
-    for name in nameRecords:
-        nameRecord = nameRecords[name]
-        nameCount = nameRecord[1]
-        nameCentre = nameRecord[0]
-        if nameCount > 1:
-            scale = 1.0/nameCount
-            for c in range(componentsCount):
-                nameCentre[c] *= scale
-        nameCentres[name] = nameCentre
-    return nameCentres
+    name_centres = {}
+    for name in name_records:
+        name_record = name_records[name]
+        name_count = name_record[1]
+        name_centre = name_record[0]
+        if name_count > 1:
+            scale = 1.0/name_count
+            for c in range(components_count):
+                name_centre[c] *= scale
+        name_centres[name] = name_centre
+    return name_centres
 
 
 def evaluate_field_nodeset_range(field: Field, nodeset: Nodeset):
@@ -208,31 +205,32 @@ def evaluate_field_nodeset_mean(field: Field, nodeset: Nodeset):
     return mean_values
 
 
-def transform_coordinates(field: Field, rotationScale, offset, time = 0.0) -> bool:
+def transform_coordinates(field: Field, rotation_scale, offset, time=0.0) -> bool:
     """
     Transform finite element field coordinates by matrix and offset, handling nodal derivatives and versions.
     Limited to nodal parameters, rectangular cartesian coordinates
     :param field: the coordinate field to transform
-    :param rotationScale: square transformation matrix 2-D array with as many rows and columns as field components.
-    :param offset: coordinates offset
-    :return: True on success, otherwise false
+    :param rotation_scale: square transformation matrix 2-D array with as many rows and columns as field components.
+    :param offset: coordinates offset.
+    :param time: time value.
+    :return: True on success, otherwise false.
     """
     ncomp = field.getNumberOfComponents()
     if (ncomp != 2) and (ncomp != 3):
         print('zinc.transformCoordinates: field has invalid number of components')
         return False
-    if (len(rotationScale) != ncomp) or (len(offset) != ncomp):
+    if (len(rotation_scale) != ncomp) or (len(offset) != ncomp):
         print('zinc.transformCoordinates: invalid matrix number of columns or offset size')
         return False
-    for matRow in rotationScale:
+    for matRow in rotation_scale:
         if len(matRow) != ncomp:
             print('zinc.transformCoordinates: invalid matrix number of columns')
             return False
-    if (field.getCoordinateSystemType() != Field.COORDINATE_SYSTEM_TYPE_RECTANGULAR_CARTESIAN):
+    if field.getCoordinateSystemType() != Field.COORDINATE_SYSTEM_TYPE_RECTANGULAR_CARTESIAN:
         print('zinc.transformCoordinates: field is not rectangular cartesian')
         return False
-    feField = field.castFiniteElement()
-    if not feField.isValid():
+    fe_field = field.castFiniteElement()
+    if not fe_field.isValid():
         print('zinc.transformCoordinates: field is not finite element field type')
         return False
     success = True
@@ -241,27 +239,29 @@ def transform_coordinates(field: Field, rotationScale, offset, time = 0.0) -> bo
     cache = fm.createFieldcache()
     cache.setTime(time)
     nodes = fm.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
-    nodetemplate = nodes.createNodetemplate()
-    nodeIter = nodes.createNodeiterator()
-    node = nodeIter.next()
+    node_template = nodes.createNodetemplate()
+    node_iter = nodes.createNodeiterator()
+    node = node_iter.next()
     while node.isValid():
-        nodetemplate.defineFieldFromNode(feField, node)
+        node_template.defineFieldFromNode(fe_field, node)
         cache.setNode(node)
-        for derivative in [Node.VALUE_LABEL_VALUE, Node.VALUE_LABEL_D_DS1, Node.VALUE_LABEL_D_DS2, Node.VALUE_LABEL_D2_DS1DS2,
-                           Node.VALUE_LABEL_D_DS3, Node.VALUE_LABEL_D2_DS1DS3, Node.VALUE_LABEL_D2_DS2DS3, Node.VALUE_LABEL_D3_DS1DS2DS3]:
-            versions = nodetemplate.getValueNumberOfVersions(feField, -1, derivative)
+        for derivative in [Node.VALUE_LABEL_VALUE, Node.VALUE_LABEL_D_DS1, Node.VALUE_LABEL_D_DS2,
+                           Node.VALUE_LABEL_D2_DS1DS2,
+                           Node.VALUE_LABEL_D_DS3, Node.VALUE_LABEL_D2_DS1DS3, Node.VALUE_LABEL_D2_DS2DS3,
+                           Node.VALUE_LABEL_D3_DS1DS2DS3]:
+            versions = node_template.getValueNumberOfVersions(fe_field, -1, derivative)
             for v in range(versions):
-                result, values = feField.getNodeParameters(cache, -1, derivative, v + 1, ncomp)
+                result, values = fe_field.getNodeParameters(cache, -1, derivative, v + 1, ncomp)
                 if result != RESULT_OK:
                     success = False
                 else:
-                    newValues = vectorops.matrixvectormult(rotationScale, values)
+                    new_values = vectorops.matrixvectormult(rotation_scale, values)
                     if derivative == Node.VALUE_LABEL_VALUE:
-                        newValues = vectorops.add(newValues, offset)
-                    result = feField.setNodeParameters(cache, -1, derivative, v + 1, newValues)
+                        new_values = vectorops.add(new_values, offset)
+                    result = fe_field.setNodeParameters(cache, -1, derivative, v + 1, new_values)
                     if result != RESULT_OK:
                         success = False
-        node = nodeIter.next()
+        node = node_iter.next()
     fm.endChange()
     if not success:
         print('zinc.transformCoordinates: failed to get/set some values')
@@ -301,7 +301,7 @@ def create_nodes(finite_element_field, node_coordinate_set, node_set_name='nodes
         finite_element_field.assignReal(field_cache, node_coordinate)
 
 
-def get_element_node_identifiers(element : Element, eft : Elementfieldtemplate) -> list:
+def get_element_node_identifiers(element: Element, eft: Elementfieldtemplate) -> list:
     """
     Get list of node identifiers used by eft in element in the order for eft.
 
@@ -316,8 +316,8 @@ def get_element_node_identifiers(element : Element, eft : Elementfieldtemplate) 
     return node_identifiers
 
 
-def get_element_node_identifiers_basis_order(element : Element, eft : Elementfieldtemplate) -> list:
-    '''
+def get_element_node_identifiers_basis_order(element: Element, eft: Elementfieldtemplate) -> list:
+    """
     Get list of node identifiers used by eft in element with the default number
     and order for the element basis. For example, with a bilinear lagrange
     basis, 4 node identifiers are always returned, possibly with repeats, even
@@ -326,45 +326,45 @@ def get_element_node_identifiers_basis_order(element : Element, eft : Elementfie
     :param element: The element to query.
     :param eft: The element field template the nodes are mapped for.
     :return: List of global node identifiers.
-    '''
+    """
     node_identifiers = []
     fn = 1
-    elementbasis = eft.getElementbasis()
+    element_basis = eft.getElementbasis()
     for n in range(eft.getElementbasis().getNumberOfNodes()):
         ln = eft.getTermLocalNodeIndex(fn, 1)
         node_identifiers.append(element.getNode(eft, ln).getIdentifier())
-        fn += elementbasis.getNumberOfFunctionsPerNode(n + 1)
+        fn += element_basis.getNumberOfFunctionsPerNode(n + 1)
     return node_identifiers
 
 
-def get_maximum_element_identifier(mesh : Mesh) -> int:
+def get_maximum_element_identifier(mesh: Mesh) -> int:
     """
     :return: Maximum element identifier in mesh or -1 if none.
     """
-    maximumElementId = -1
-    elementiterator = mesh.createElementiterator()
-    element = elementiterator.next()
+    maximum_element_id = -1
+    element_iterator = mesh.createElementiterator()
+    element = element_iterator.next()
     while element.isValid():
-        id = element.getIdentifier()
-        if id > maximumElementId:
-            maximumElementId = id
-        element = elementiterator.next()
-    return maximumElementId
+        element_id = element.getIdentifier()
+        if element_id > maximum_element_id:
+            maximum_element_id = element_id
+        element = element_iterator.next()
+    return maximum_element_id
 
 
-def get_maximum_node_identifier(nodeset : Nodeset) -> int:
+def get_maximum_node_identifier(nodeset: Nodeset) -> int:
     """
     :return: Maximum node identifier in nodeset or -1 if none.
     """
-    maximumNodeId = -1
-    nodeiterator = nodeset.createNodeiterator()
-    node = nodeiterator.next()
+    maximum_node_id = -1
+    node_iterator = nodeset.createNodeiterator()
+    node = node_iterator.next()
     while node.isValid():
-        id = node.getIdentifier()
-        if id > maximumNodeId:
-            maximumNodeId = id
-        node = nodeiterator.next()
-    return maximumNodeId
+        node_id = node.getIdentifier()
+        if node_id > maximum_node_id:
+            maximum_node_id = node_id
+        node = node_iterator.next()
+    return maximum_node_id
 
 
 createCubeElement = create_cube_element
