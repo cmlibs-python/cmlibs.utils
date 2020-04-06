@@ -387,8 +387,8 @@ def find_or_create_field_finite_element(fieldmodule: Fieldmodule, name: str, com
     """
     assert (components_count > 0), "opencmiss.utils.zinc.field.find_or_create_field_finite_element." \
                                    "  Invalid components_count"
-    assert (not component_names) or (len(component_names) == components_count),\
-        "opencmiss.utils.zinc.field.get_or_create_field_finite_element.  Invalid component_names"
+    assert (not component_names) or (len(component_names) >= components_count),\
+        "opencmiss.utils.zinc.field.find_or_create_field_finite_element.  Invalid component_names"
     if field_exists(fieldmodule, name, 'FiniteElement', components_count):
         existing_field = fieldmodule.findFieldByName(name)
         return existing_field.castFiniteElement()
