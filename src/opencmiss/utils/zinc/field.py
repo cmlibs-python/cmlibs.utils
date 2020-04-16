@@ -336,6 +336,7 @@ def create_field_finite_element(fieldmodule: Fieldmodule, name: str, components_
 def create_field_finite_element_clone(source_field: Field, name: str, managed=False) -> FieldFiniteElement:
     """
     Copy an existing Finite Element Field to a new field of supplied name.
+    Note: does not handle time-varying parameters.
     New field is not managed by default.
     :param source_field: Zinc finite element field to copy.
     :param name: The name of the new field, asserts that no field of that name exists.
@@ -574,7 +575,8 @@ def find_or_create_field_stored_mesh_location(fieldmodule: Fieldmodule, mesh: Me
     if not name:
         name = "location_" + mesh.getName()
     field = fieldmodule.findFieldByName(name)
-    if field_exists(fieldmodule, name, 'StoredMeshLocation', mesh.getDimension()):
+    # StoredMeshLocation field can only have 1 component; its value is an element + xi coordinates
+    if field_exists(fieldmodule, name, 'StoredMeshLocation', 1):
         mesh_location_field = field.castStoredMeshLocation()
         return mesh_location_field
         
