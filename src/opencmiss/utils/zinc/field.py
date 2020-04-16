@@ -575,6 +575,7 @@ def find_or_create_field_stored_mesh_location(fieldmodule: Fieldmodule, mesh: Me
     if not name:
         name = "location_" + mesh.getName()
     field = fieldmodule.findFieldByName(name)
+    # StoredMeshLocation field can only have 1 component; its value is an element + xi coordinates
     if field_exists(fieldmodule, name, 'StoredMeshLocation', 1):
         mesh_location_field = field.castStoredMeshLocation()
         return mesh_location_field
