@@ -103,14 +103,21 @@ def create_square_element(mesh: Mesh, finite_element_field: Field, node_coordina
     fieldmodule.defineAllFaces()
 
 
-def find_node_with_name(nodeset: Nodeset, name_field: Field, name):
+def find_node_with_name(nodeset: Nodeset, name_field: Field, name: str, ignore_case=False, strip_whitespace=False):
     """
     Get single node in nodeset with supplied name.
     :param nodeset: Zinc Nodeset or NodesetGroup to search.
     :param name_field: The name field to match.
     :param name: The name to match in nameField.
-    :return: Node with name, or None if 0 or multiple nodes with name.
+    :param ignore_case: Set to True to ignore case differences.
+    :param strip_whitespace: Set to True to ignore leading and trailing whitespace differences.
+    :return: Zinc Node with name, or None if 0 or multiple nodes with name.
     """
+    match_name = name
+    if strip_whitespace:
+        match_name = match_name.strip()
+    if ignore_case:
+        match_name = match_name.casefold()
     fieldmodule = nodeset.getFieldmodule()
     fieldcache = fieldmodule.createFieldcache()
     nodeiter = nodeset.createNodeiterator()
@@ -119,7 +126,11 @@ def find_node_with_name(nodeset: Nodeset, name_field: Field, name):
     while node.isValid():
         fieldcache.setNode(node)
         temp_name = name_field.evaluateString(fieldcache)
-        if temp_name == name:
+        if strip_whitespace:
+            temp_name = temp_name.strip()
+        if ignore_case:
+            temp_name = temp_name.casefold()
+        if temp_name == match_name:
             if node_with_name:
                 return None
             node_with_name = node
@@ -153,7 +164,7 @@ def get_node_name_centres(nodeset: Nodeset, coordinates_field: Field, name_field
                     name_centre[c] += coordinates[c]
                 name_record[1] += 1
             else:
-                name_records[name] = (coordinates, 1)
+                name_records[name] = [ coordinates, 1 ]
         node = nodeiter.next()
     # divide centre coordinates by count
     name_centres = {}
