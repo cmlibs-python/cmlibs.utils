@@ -26,6 +26,8 @@ readme = readfile("README.rst", split=True)
 readme.append('License')
 readme.append('=======')
 readme.append('')
+readme.append('::')
+readme.append('')
 readme.append('')
 
 software_licence = readfile("LICENSE")
@@ -37,6 +39,7 @@ setup(
     version=version,
     description='OpenCMISS Utilities for Python.',
     long_description='\n'.join(readme) + software_licence,
+    long_description_content_type='text/x-rst',
     classifiers=[],
     author='Hugh Sorby',
     author_email='h.sorby@auckland.ac.nz',
