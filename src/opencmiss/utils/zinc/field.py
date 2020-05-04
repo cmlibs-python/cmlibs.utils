@@ -75,13 +75,16 @@ def create_fields_displacement_gradients(coordinates: Field, reference_coordinat
 
 def create_field_euler_angles_rotation_matrix(fieldmodule: Fieldmodule, euler_angles: Field) -> Field:
     """
-    From OpenCMISS-Zinc graphics_library.cpp, transposed.
-    :param fieldmodule:
+    From OpenCMISS-Zinc graphics_library.cpp, matrix transposed to row major.
+    Matrix is product RzRyRx, giving rotation about x, then y, then z with
+    positive angles rotating by right hand rule about axis.
+    :param fieldmodule: The fieldmodule to create the field in.
     :param euler_angles: 3-component field of angles in radians, components:
-    1 = azimuth (about z)
-    2 = elevation (about rotated y)
-    3 = roll (about rotated x)
-    :return: 3x3 rotation matrix field suitable for pre-multiplying [x, y, z].
+    0 = azimuth (about z)
+    1 = elevation (about y)
+    2 = roll (about x)
+    :return: 3x3 rotation matrix field suitable for pre-multiplying vector v
+    i.e. v' = Mv
     """
     assert euler_angles.getNumberOfComponents() == 3
     with ChangeManager(fieldmodule):
