@@ -69,27 +69,27 @@ def quaternion_to_rotation_matrix(quaternion):
     return mx
 
 
-def matrixconstantmult(m, c):
+def matrix_constant_mult(m, c):
     '''
     Multiply components of matrix m by constant c
     '''
     return [mult(row_m, c) for row_m in m]
 
 
-def matrixvectormult(m, v):
+def matrix_vector_mult(m, v):
     '''
     Post multiply matrix m by vector v
     '''
     return [dot(row_m, v) for row_m in m]
 
 
-def vectormatrixmult(v, m):
+def vector_matrix_mult(v, m):
     '''
     Premultiply matrix m by vector v
     '''
     rows = len(m)
     if len(v) != rows:
-        raise ValueError('vectormatrixmult mismatched rows')
+        raise ValueError('vector_matrix_mult mismatched rows')
     columns = len(m[0])
     result = []
     for c in range(0, columns):
@@ -97,12 +97,12 @@ def vectormatrixmult(v, m):
     return result
 
 
-def matrixmult(a, b):
+def matrix_mult(a, b):
     '''
     Multiply 2 matrices: first index is down row, second is across column.
     Assumes sizes are compatible (number of columns of a == number of rows of b).
     '''
-    return [vectormatrixmult(row_a, b) for row_a in a]
+    return [vector_matrix_mult(row_a, b) for row_a in a]
 
 
 def transpose(a):
@@ -198,11 +198,12 @@ def reshape(a, new_shape):
     return b
 
 
+# legacy function names
 rotmx = quaternion_to_rotation_matrix
-mxconstantmult = matrixconstantmult
-mxvectormult = matrixvectormult
-vectormxmult = vectormatrixmult
-mxmult = matrixmult
+mxconstantmult = matrix_constant_mult
+mxvectormult = matrix_vector_mult
+vectormxmult = vectormatrixmult = vector_matrix_mult
+mxmult = matrixmult = matrix_mult
 eulerToRotationMatrix3 = euler_to_rotation_matrix
 rotationMatrix3ToEuler = rotation_matrix_to_euler
 axisAngleToQuaternion = axis_angle_to_quaternion
