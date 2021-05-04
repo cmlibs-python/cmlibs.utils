@@ -45,6 +45,7 @@ setup(
     author_email='h.sorby@auckland.ac.nz',
     url='https://github.com/OpenCMISS-Bindings/opencmiss.utils',
     license='Apache Software License',
+    license_files = ("LICENSE",),
     packages=find_packages("src"),
     package_dir={"": "src"},
     include_package_data=True,
