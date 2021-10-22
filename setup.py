@@ -4,7 +4,6 @@ import re
 
 from setuptools import setup, find_packages
 
-
 here = os.path.abspath(os.path.dirname(__file__))
 
 with open(os.path.join(here, 'src', 'opencmiss', 'utils', '__init__.py')) as fd:
@@ -45,11 +44,10 @@ setup(
     author_email='h.sorby@auckland.ac.nz',
     url='https://github.com/OpenCMISS-Bindings/opencmiss.utils',
     license='Apache Software License',
-    license_files = ("LICENSE",),
+    license_files=("LICENSE",),
     packages=find_packages("src"),
     package_dir={"": "src"},
     include_package_data=True,
     zip_safe=False,
     install_requires=requires,
 )
-
