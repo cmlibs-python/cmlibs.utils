@@ -1,7 +1,7 @@
 """
 Utilities for creating and working with Zinc Finite Elements.
 """
-from opencmiss.utils.maths import vectorops
+from opencmiss.maths import vectorops
 from opencmiss.utils.zinc.general import ChangeManager
 from opencmiss.zinc.element import Element, Elementbasis, Elementfieldtemplate, Mesh
 from opencmiss.zinc.field import Field
