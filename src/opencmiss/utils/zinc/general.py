@@ -61,6 +61,32 @@ class ChangeManager:
         self._object.endChange()
 
 
+class HierarchicalChangeManager:
+    """
+    Python Context Manager minimising change messages for a Zinc object,
+    for use whenever making multiple changes to the object or objects it owns.
+    Hierarchical version for use with Region object.
+    Ensures beginHierarchicalChange, endHierarchicalChange are always called,
+    even with exceptions.
+    Usage:
+    with HierarchicalChangeManager(region):
+        # make multiple changes to object or objects it owns including fieldmodules and childregions
+    """
+
+    def __init__(self, change_object):
+        """
+        :param change_object: Zinc object with beginChange/endChange methods.
+        """
+        self._object = change_object
+
+    def __enter__(self):
+        self._object.beginHierarchicalChange()
+        return self
+
+    def __exit__(self, *args):
+        self._object.endHierarchicalChange()
+
+
 def define_standard_graphics_objects(context: Context):
     """
     Defines Zinc standard objects for use in graphics, including
