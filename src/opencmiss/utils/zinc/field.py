@@ -13,9 +13,10 @@ from opencmiss.zinc.result import RESULT_OK
 def field_is_managed_coordinates(field_in: Field):
     """
     Conditional function returning True if the field is Finite Element
-    type with 3 components, and is managed.
+    type, with coordinate type attribute, up to 3 components, and is managed.
     """
-    return field_in.castFiniteElement().isValid() and (field_in.getNumberOfComponents() == 3) and field_in.isManaged()
+    return field_in.castFiniteElement().isValid() and field_in.isTypeCoordinate() and\
+        (field_in.getNumberOfComponents() <= 3) and field_in.isManaged()
 
 
 def field_is_managed_group(field_in: Field):
