@@ -15,8 +15,9 @@ def field_is_managed_coordinates(field_in: Field):
     Conditional function returning True if the field is Finite Element
     type, with coordinate type attribute, up to 3 components, and is managed.
     """
-    return field_in.castFiniteElement().isValid() and field_in.isTypeCoordinate() and\
-        (field_in.getNumberOfComponents() <= 3) and field_in.isManaged()
+    return (field_in) and field_in.isManaged() and\
+        (field_in.getNumberOfComponents() <= 3) and\
+        field_in.castFiniteElement().isValid() and field_in.isTypeCoordinate()
 
 
 def field_is_managed_group(field_in: Field):
