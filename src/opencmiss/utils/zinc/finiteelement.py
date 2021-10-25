@@ -228,21 +228,21 @@ def transform_coordinates(field: Field, rotation_scale, offset, time=0.0) -> boo
     """
     ncomp = field.getNumberOfComponents()
     if (ncomp != 2) and (ncomp != 3):
-        print('zinc.transformCoordinates: field has invalid number of components')
+        print('transform_coordinates: field has invalid number of components')
         return False
     if (len(rotation_scale) != ncomp) or (len(offset) != ncomp):
-        print('zinc.transformCoordinates: invalid matrix number of columns or offset size')
+        print('transform_coordinates: invalid matrix number of columns or offset size')
         return False
     for matRow in rotation_scale:
         if len(matRow) != ncomp:
-            print('zinc.transformCoordinates: invalid matrix number of columns')
+            print('transform_coordinates: invalid matrix number of columns')
             return False
     if field.getCoordinateSystemType() != Field.COORDINATE_SYSTEM_TYPE_RECTANGULAR_CARTESIAN:
-        print('zinc.transformCoordinates: field is not rectangular cartesian')
+        print('transform_coordinates: field is not rectangular cartesian')
         return False
     fe_field = field.castFiniteElement()
     if not fe_field.isValid():
-        print('zinc.transformCoordinates: field is not finite element field type')
+        print('transform_coordinates: field is not finite element field type')
         return False
     success = True
     fm = field.getFieldmodule()
@@ -266,7 +266,7 @@ def transform_coordinates(field: Field, rotation_scale, offset, time=0.0) -> boo
                 if result != RESULT_OK:
                     success = False
                 else:
-                    new_values = vectorops.matrixvectormult(rotation_scale, values)
+                    new_values = vectorops.matrix_vector_mult(rotation_scale, values)
                     if derivative == Node.VALUE_LABEL_VALUE:
                         new_values = vectorops.add(new_values, offset)
                     result = fe_field.setNodeParameters(cache, -1, derivative, v + 1, new_values)
@@ -275,7 +275,7 @@ def transform_coordinates(field: Field, rotation_scale, offset, time=0.0) -> boo
         node = node_iter.next()
     fm.endChange()
     if not success:
-        print('zinc.transformCoordinates: failed to get/set some values')
+        print('transform_coordinates: failed to get/set some values')
     return success
 
 
