@@ -31,7 +31,7 @@ readme.append('')
 
 software_licence = readfile("LICENSE")
 
-requires = ['opencmiss.zinc']
+requires = ['opencmiss.maths', 'opencmiss.zinc']
 
 setup(
     name='opencmiss.utils',
