@@ -103,6 +103,30 @@ def create_square_element(mesh: Mesh, finite_element_field: Field, node_coordina
     fieldmodule.defineAllFaces()
 
 
+def create_line_element(finite_element_field, node_coordinates):
+    # Use a 3D mesh to to create the 3D finite element.
+    fieldmodule = finite_element_field.getFieldmodule()
+    mesh = fieldmodule.findMeshByDimension(1)
+    element_template = mesh.createElementtemplate()
+    element_template.setElementShapeType(Element.SHAPE_TYPE_LINE)
+    element_node_count = 2
+    element_template.setNumberOfNodes(element_node_count)
+    # Specify the dimension and the interpolation function for the element basis function
+    linear_basis = fieldmodule.createElementbasis(1, Elementbasis.FUNCTION_TYPE_LINEAR_LAGRANGE)
+    # the indices of the nodes in the node template we want to use.
+    node_indexes = [1, 2]
+
+    # Define a nodally interpolated element field or field component in the
+    # element_template
+    element_template.defineFieldSimpleNodal(finite_element_field, -1, linear_basis, node_indexes)
+    element_template.setNode(1, node1)
+    element_template.setNode(2, node2)
+
+    element = mesh.createElement(-1, element_template)
+
+    return element
+
+
 def find_node_with_name(nodeset: Nodeset, name_field: Field, name: str, ignore_case=False, strip_whitespace=False):
     """
     Get single node in nodeset with supplied name.
