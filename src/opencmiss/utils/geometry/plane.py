@@ -1,12 +1,11 @@
-'''
-Created on Jun 22, 2015
-
-@author: hsorby
-'''
 import json
 
 
 class ZincPlane(object):
+    """
+    A description of a plane in OpenCMISS Zinc terms.
+    The plane is described by a 3D point and a normal vector.
+    """
 
     def __init__(self, fieldmodule):
         self._normal_field = self._createNormalField(fieldmodule)
@@ -71,6 +70,9 @@ class ZincPlane(object):
 
 
 class PlaneAttitude(object):
+    """
+    A class to help serialise and compare Plane attitudes.
+    """
 
     precision = 12
 

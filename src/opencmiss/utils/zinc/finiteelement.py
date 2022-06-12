@@ -312,7 +312,7 @@ def create_nodes(finite_element_field, node_coordinate_set, node_set_name='nodes
     :param node_set_name:
     :param time: The time to set for the node, defaults to None for nodes that are not time aware.
     :param node_set: The node set to use for creating nodes, if not set then the node set for creating nodes is
-    chosen by node_set_name.
+                     chosen by node_set_name.
     :return: None
     """
     fieldmodule = finite_element_field.getFieldmodule()

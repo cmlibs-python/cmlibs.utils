@@ -5,6 +5,10 @@ from opencmiss.zinc.context import Context
 
 
 class AbstractNodeDataObject(object):
+    """
+    A node data object for managing node fields.
+    Offers ability to work with a time sequence and fields that make use of time sequences.
+    """
 
     def __init__(self, field_names, time_sequence=None, time_sequence_field_names=None):
         self._field_names = field_names
@@ -42,9 +46,10 @@ class ChangeManager:
     Python Context Manager minimising change messages for a Zinc object,
     for use whenever making multiple changes to the object or objects it owns.
     Ensures beginChange, endChange are always called, even with exceptions.
-    Usage:
-    with ChangeManager(object):
-        # make multiple changes to object or objects it owns
+    Usage::
+
+      with ChangeManager(object):
+          # make multiple changes to object or objects it owns
     """
 
     def __init__(self, change_object):
@@ -68,9 +73,10 @@ class HierarchicalChangeManager:
     Hierarchical version for use with Region object.
     Ensures beginHierarchicalChange, endHierarchicalChange are always called,
     even with exceptions.
-    Usage:
-    with HierarchicalChangeManager(region):
-        # make multiple changes to object or objects it owns including fieldmodules and childregions
+    Usage::
+
+      with HierarchicalChangeManager(region):
+          # make multiple changes to object or objects it owns including fieldmodules and childregions
     """
 
     def __init__(self, change_object):
@@ -91,6 +97,8 @@ def define_standard_graphics_objects(context: Context):
     """
     Defines Zinc standard objects for use in graphics, including
     a number of graphical materials and glyphs.
+
+    :param context: A Zinc context
     """
     glyphmodule = context.getGlyphmodule()
     glyphmodule.defineStandardGlyphs()
