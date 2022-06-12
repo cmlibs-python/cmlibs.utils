@@ -174,9 +174,11 @@ def create_fields_transformations(coordinates: Field, rotation_angles=None, scal
     """
     Create constant fields for rotation, scale and translation containing the supplied
     values, plus the transformed coordinates applying them in the supplied order.
+
+    See create_field_euler_angles_rotation_matrix.
+
     :param coordinates: The coordinate field to scale, 3 components.
     :param rotation_angles: List of euler angles, length = number of components.
-     See create_field_euler_angles_rotation_matrix.
     :param scale_value: Scalar to multiply all components of coordinates.
     :param translation_offsets: List of offsets, length = number of components.
     :return: 4 fields: transformedCoordinates, rotation, scale, translation
@@ -311,7 +313,7 @@ def field_exists(fieldmodule: Fieldmodule, name: str, field_type, components_cou
     :param field_type: Type of field if derived type. Default: finiteelement.
     :param components_count: Number of components in the field. Default: 3.
     :return: True if the field is found in the module with the given name and number of components,
-    false otherwise.
+             false otherwise.
     """
     field = fieldmodule.findFieldByName(name)
     if field.isValid():
@@ -551,7 +553,7 @@ def create_field_stored_mesh_location(fieldmodule: Fieldmodule, mesh: Mesh, name
 
     :param fieldmodule:  Zinc fieldmodule to find or create field in.
     :param mesh:  Mesh to store locations in, from same fieldmodule.
-    :param name:  Name of new field. If not defined, defaults to "location_" + mesh.getName().
+    :param name:  Name of new field. If not defined, defaults to "location\_" + mesh.getName().
     :param managed: Managed state of field.
     :return: Zinc FieldStoredMeshLocation
     """
@@ -574,7 +576,7 @@ def find_or_create_field_stored_mesh_location(fieldmodule: Fieldmodule, mesh: Me
 
     :param fieldmodule:  Zinc fieldmodule to find or create field in.
     :param mesh:  Mesh to store locations in, from same fieldmodule.
-    :param name:  Name of new field. If not defined, defaults to "location_" + mesh.getName().
+    :param name:  Name of new field. If not defined, defaults to "location\_" + mesh.getName().
     :param managed: Managed state of field if created here.
     """
     if not name:

@@ -9,7 +9,8 @@ def extractImageCorners(directory, filename):
     Extract the image corners from an image that is assumed to be
     a DICOM image.
     Corners are returned as:
-      [bl, br, tl, tr]
+
+    [bottom left (bl), bottom right (br), top left (tl), top right (tr)]
 
     :param directory: the directory where the file given with filename exists.
     :param filename: the filename of the file to interrogate.
