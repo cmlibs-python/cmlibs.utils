@@ -2,7 +2,7 @@
 
 # -- Project information
 
-project = 'OpenCMISS Utils'
+project = 'CMLibs Utils'
 copyright = '2022, University of Auckland'
 author = 'University of Auckland'
 

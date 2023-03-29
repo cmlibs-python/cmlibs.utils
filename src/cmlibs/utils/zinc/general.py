@@ -1,7 +1,7 @@
 """
-General utilities for working with the OpenCMISS-Zinc library.
+General utilities for working with the Zinc library.
 """
-from opencmiss.zinc.context import Context
+from cmlibs.zinc.context import Context
 
 
 class AbstractNodeDataObject(object):

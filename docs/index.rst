@@ -1,7 +1,7 @@
-OpenCMISS Utils
-===============
+CMLibs Utils
+============
 
-The **OpenCMISS Utils** is a collection of Python utilities to support working with the OpenCMISS Zinc library.
+The **CMLibs Utils** is a collection of Python utilities to support working with the Zinc library.
 This package provides six modules
 
 #. geometry.plane
@@ -11,17 +11,17 @@ This package provides six modules
 #. zinc.material
 #. image
 
-These modules are surfaced under the namespace package *opencmiss* within the *utils* package.
+These modules are surfaced under the namespace package *cmlibs* within the *utils* package.
 To use these modules the following import statement can be used::
 
-  import opencmiss.utils.geometry.plane
-  import opencmiss.utils.zinc.finiteelement
+  import cmlibs.utils.geometry.plane
+  import cmlibs.utils.zinc.finiteelement
 
 Geometry
 --------
 
 The *geometry* package contains a module *plane*.
-The *plane* module encapsulates describing a plane (a point and a normal vector) in an OpenCMISS Zinc way.
+The *plane* module encapsulates describing a plane (a point and a normal vector) in a Zinc way.
 It also encapsulates a way to serialise a description of a plane.
 
 Zinc
@@ -49,7 +49,7 @@ Geometry Package
 Plane
 +++++
 
-.. automodule:: opencmiss.utils.geometry.plane
+.. automodule:: cmlibs.utils.geometry.plane
    :members:
 
 Zinc Package
@@ -58,29 +58,29 @@ Zinc Package
 Field
 +++++
 
-.. automodule:: opencmiss.utils.zinc.field
+.. automodule:: cmlibs.utils.zinc.field
    :members:
 
 FiniteElement
 +++++++++++++
 
-.. automodule:: opencmiss.utils.zinc.finiteelement
+.. automodule:: cmlibs.utils.zinc.finiteelement
    :members:
 
 General
 +++++++
 
-.. automodule:: opencmiss.utils.zinc.general
+.. automodule:: cmlibs.utils.zinc.general
    :members:
 
 Material
 ++++++++
 
-.. automodule:: opencmiss.utils.zinc.material
+.. automodule:: cmlibs.utils.zinc.material
    :members:
 
 Image Module
 ************
 
-.. automodule:: opencmiss.utils.image
+.. automodule:: cmlibs.utils.image
    :members:

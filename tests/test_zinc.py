@@ -1,12 +1,12 @@
 import os
 import unittest
-from opencmiss.utils.zinc.field import createFieldMeshIntegral, findOrCreateFieldCoordinates, \
+from cmlibs.utils.zinc.field import createFieldMeshIntegral, findOrCreateFieldCoordinates, \
     findOrCreateFieldGroup, findOrCreateFieldNodeGroup
-from opencmiss.utils.zinc.finiteelement import createCubeElement, createSquareElement, createNodes, \
+from cmlibs.utils.zinc.finiteelement import createCubeElement, createSquareElement, createNodes, \
     createTriangleElements, evaluateFieldNodesetMean
-from opencmiss.zinc.context import Context
-from opencmiss.zinc.field import Field
-from opencmiss.zinc.result import RESULT_OK
+from cmlibs.zinc.context import Context
+from cmlibs.zinc.field import Field
+from cmlibs.zinc.result import RESULT_OK
 
 here = os.path.abspath(os.path.dirname(__file__))
 

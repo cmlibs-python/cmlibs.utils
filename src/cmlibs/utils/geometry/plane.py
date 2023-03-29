@@ -3,7 +3,7 @@ import json
 
 class ZincPlane(object):
     """
-    A description of a plane in OpenCMISS Zinc terms.
+    A description of a plane in Zinc terms.
     The plane is described by a 3D point and a normal vector.
     """
 
