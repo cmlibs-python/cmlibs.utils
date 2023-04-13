@@ -2,10 +2,10 @@
 Utilities for working with Zinc graphics materials.
 """
 
-from opencmiss.utils.zinc.general import ChangeManager
-from opencmiss.zinc.field import Field
-from opencmiss.zinc.material import Material
-from opencmiss.zinc.region import Region
+from cmlibs.utils.zinc.general import ChangeManager
+from cmlibs.zinc.field import Field
+from cmlibs.zinc.material import Material
+from cmlibs.zinc.region import Region
 
 
 def create_material_using_image_field(region: Region, image_field: Field, colour_mapping_type=None, image_range=None)\

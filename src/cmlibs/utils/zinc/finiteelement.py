@@ -1,12 +1,12 @@
 """
 Utilities for creating and working with Zinc Finite Elements.
 """
-from opencmiss.maths import vectorops
-from opencmiss.utils.zinc.general import ChangeManager
-from opencmiss.zinc.element import Element, Elementbasis, Elementfieldtemplate, Mesh
-from opencmiss.zinc.field import Field
-from opencmiss.zinc.node import Node, Nodeset
-from opencmiss.zinc.result import RESULT_OK
+from cmlibs.maths import vectorops
+from cmlibs.utils.zinc.general import ChangeManager
+from cmlibs.zinc.element import Element, Elementbasis, Elementfieldtemplate, Mesh
+from cmlibs.zinc.field import Field
+from cmlibs.zinc.node import Node, Nodeset
+from cmlibs.zinc.result import RESULT_OK
 
 
 def create_triangle_elements(mesh: Mesh, finite_element_field: Field, element_node_set):

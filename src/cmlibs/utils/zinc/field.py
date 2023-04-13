@@ -1,13 +1,13 @@
 """
 Utilities for creating and working with Zinc Fields.
 """
-from opencmiss.utils.zinc.general import ChangeManager
-from opencmiss.zinc.element import Mesh
-from opencmiss.zinc.field import Field, FieldFiniteElement, FieldGroup, \
+from cmlibs.utils.zinc.general import ChangeManager
+from cmlibs.zinc.element import Mesh
+from cmlibs.zinc.field import Field, FieldFiniteElement, FieldGroup, \
     FieldNodeGroup, FieldStoredMeshLocation
-from opencmiss.zinc.fieldmodule import Fieldmodule
-from opencmiss.zinc.node import Nodeset
-from opencmiss.zinc.result import RESULT_OK
+from cmlibs.zinc.fieldmodule import Fieldmodule
+from cmlibs.zinc.node import Nodeset
+from cmlibs.zinc.result import RESULT_OK
 
 
 def field_is_managed_coordinates(field_in: Field):
@@ -77,7 +77,7 @@ def create_fields_displacement_gradients(coordinates: Field, reference_coordinat
 
 def create_field_euler_angles_rotation_matrix(fieldmodule: Fieldmodule, euler_angles: Field) -> Field:
     """
-    From OpenCMISS-Zinc graphics_library.cpp, matrix transposed to row major.
+    From Zinc graphics_library.cpp, matrix transposed to row major.
     Matrix is product RzRyRx, giving rotation about x, then y, then z with
     positive angles rotating by right hand rule about axis.
     :param fieldmodule: The fieldmodule to create the field in.
@@ -351,10 +351,10 @@ def create_field_finite_element_clone(source_field: Field, name: str, managed=Fa
     :return: New identically defined field with supplied name.
     """
     assert source_field.castFiniteElement().isValid(), \
-        "opencmiss.utils.zinc.field.createFieldFiniteElementClone.  Not a Zinc finite element field"
+        "cmlibs.utils.zinc.field.createFieldFiniteElementClone.  Not a Zinc finite element field"
     fieldmodule = source_field.getFieldmodule()
     field = fieldmodule.findFieldByName(name)
-    assert not field.isValid(), "opencmiss.utils.zinc.field.createFieldFiniteElementClone.  Target field name is in use"
+    assert not field.isValid(), "cmlibs.utils.zinc.field.createFieldFiniteElementClone.  Target field name is in use"
     with ChangeManager(fieldmodule):
         # Zinc needs a function to do this efficiently; currently serialise to string, replace field name and reload!
         source_name = source_field.getName()
@@ -393,10 +393,10 @@ def find_or_create_field_finite_element(fieldmodule: Fieldmodule, name: str, com
     :param type_coordinate: Default value of flag indicating field gives geometric coordinates.
     :return: Zinc FieldFiniteElement, invalid if error.
     """
-    assert (components_count > 0), "opencmiss.utils.zinc.field.find_or_create_field_finite_element." \
+    assert (components_count > 0), "cmlibs.utils.zinc.field.find_or_create_field_finite_element." \
                                    "  Invalid components_count"
     assert (not component_names) or (len(component_names) >= components_count),\
-        "opencmiss.utils.zinc.field.find_or_create_field_finite_element.  Invalid component_names"
+        "cmlibs.utils.zinc.field.find_or_create_field_finite_element.  Invalid component_names"
     if field_exists(fieldmodule, name, 'FiniteElement', components_count):
         existing_field = fieldmodule.findFieldByName(name)
         return existing_field.castFiniteElement()

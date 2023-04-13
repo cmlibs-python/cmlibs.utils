@@ -1,7 +1,7 @@
 import dicom
 import os
 
-from opencmiss.maths import vectorops
+from cmlibs.maths import vectorops
 
 
 def extractImageCorners(directory, filename):
