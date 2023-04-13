@@ -3,12 +3,7 @@
 OpenCMISS Utils
 ===============
 
-OpenCMISS utilities for Python.  This software can be found on PyPi and installed with the following command::
+This package has been renamed. Use :code:`pip install cmlibs.utils` instead.
+New package: https://pypi.org/project/cmlibs.utils/
 
-  pip install opencmiss.utils
-
-Distribution
-============
-
-This software uses regex to extract the version number information from the package. The version number for this package is stored in 'src/opencmiss/utils/__init__.py'
-
+See `OpenCMISS2CMLibs rename tool <https://pypi.org/project/opencmiss2cmlibs/>`_ for help with renaming your own code.
