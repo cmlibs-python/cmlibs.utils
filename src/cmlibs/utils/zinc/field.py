@@ -4,7 +4,7 @@ Utilities for creating and working with Zinc Fields.
 from cmlibs.utils.zinc.general import ChangeManager
 from cmlibs.zinc.element import Mesh
 from cmlibs.zinc.field import Field, FieldFiniteElement, FieldGroup, \
-    FieldNodeGroup, FieldStoredMeshLocation
+    FieldStoredMeshLocation
 from cmlibs.zinc.fieldmodule import Fieldmodule
 from cmlibs.zinc.node import Nodeset
 from cmlibs.zinc.result import RESULT_OK
@@ -506,21 +506,6 @@ def find_or_create_field_group(fieldmodule: Fieldmodule, name: str, managed=True
     return create_field_group(fieldmodule, name, managed=managed)
 
 
-def find_or_create_field_node_group(group: FieldGroup, nodeset: Nodeset) -> FieldNodeGroup:
-    """
-    Gets or creates the node group field for the supplied nodeset in group.
-    Field is managed by its parent group field.
-
-    :param group:  Zinc group field that manages child node group field.
-    :param nodeset:  A nodeset from group region to get or create subgroup of.
-    :return: Zinc FieldNodeGroup.
-    """
-    node_group = group.getFieldNodeGroup(nodeset)
-    if not node_group.isValid():
-        node_group = group.createFieldNodeGroup(nodeset)
-    return node_group
-
-
 def create_field_texture_coordinates(fieldmodule: Fieldmodule, name="texture coordinates", components_count=3,
                                      managed=False) -> FieldFiniteElement:
     """
@@ -681,7 +666,6 @@ findOrCreateFieldCoordinates = find_or_create_field_coordinates
 findOrCreateFieldFiniteElement = find_or_create_field_finite_element
 findOrCreateFieldFibres = find_or_create_field_fibres
 findOrCreateFieldGroup = find_or_create_field_group
-findOrCreateFieldNodeGroup = find_or_create_field_node_group
 findOrCreateFieldStoredMeshLocation = find_or_create_field_stored_mesh_location
 findOrCreateFieldStoredString = find_or_create_field_stored_string
 findOrCreateFieldTextureCoordinates = find_or_create_field_texture_coordinates

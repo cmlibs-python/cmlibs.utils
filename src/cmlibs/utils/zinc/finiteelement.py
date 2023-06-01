@@ -103,28 +103,38 @@ def create_square_element(mesh: Mesh, finite_element_field: Field, node_coordina
     fieldmodule.defineAllFaces()
 
 
-def create_line_element(finite_element_field, node_coordinates):
-    # Use a 3D mesh to to create the 3D finite element.
+def create_line_element(mesh: Mesh, finite_element_field: Field, node_coordinate_set):
+    """
+    Create a single linear 1-D finite element using the supplied
+    finite element field and sequence of 2 n-D node coordinates.
+
+    :param mesh: The Zinc Mesh to create elements in.
+    :param finite_element_field:  Zinc FieldFiniteElement to interpolate on element.
+    :param node_coordinate_set: Sequence of 4 coordinates each with as many components as finite element field.
+    :return: None
+    """
+    assert mesh.getDimension() == 1
+    assert finite_element_field.castFiniteElement().isValid()
+    assert len(node_coordinate_set) == 2
     fieldmodule = finite_element_field.getFieldmodule()
-    mesh = fieldmodule.findMeshByDimension(1)
+    nodeset = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+    node_template = nodeset.createNodetemplate()
+    node_template.defineField(finite_element_field)
     element_template = mesh.createElementtemplate()
     element_template.setElementShapeType(Element.SHAPE_TYPE_LINE)
-    element_node_count = 2
-    element_template.setNumberOfNodes(element_node_count)
-    # Specify the dimension and the interpolation function for the element basis function
     linear_basis = fieldmodule.createElementbasis(1, Elementbasis.FUNCTION_TYPE_LINEAR_LAGRANGE)
-    # the indices of the nodes in the node template we want to use.
-    node_indexes = [1, 2]
-
-    # Define a nodally interpolated element field or field component in the
-    # element_template
-    element_template.defineFieldSimpleNodal(finite_element_field, -1, linear_basis, node_indexes)
-    element_template.setNode(1, node1)
-    element_template.setNode(2, node2)
-
-    element = mesh.createElement(-1, element_template)
-
-    return element
+    eft = mesh.createElementfieldtemplate(linear_basis)
+    element_template.defineField(finite_element_field, -1, eft)
+    field_cache = fieldmodule.createFieldcache()
+    with ChangeManager(fieldmodule):
+        node_identifiers = []
+        for node_coordinate in node_coordinate_set:
+            node = nodeset.createNode(-1, node_template)
+            node_identifiers.append(node.getIdentifier())
+            field_cache.setNode(node)
+            finite_element_field.assignReal(field_cache, node_coordinate)
+        element = mesh.createElement(-1, element_template)
+        element.setNodesByIdentifier(eft, node_identifiers)
 
 
 def find_node_with_name(nodeset: Nodeset, name_field: Field, name: str, ignore_case=False, strip_whitespace=False):
@@ -404,6 +414,7 @@ def get_maximum_node_identifier(nodeset: Nodeset) -> int:
 
 createCubeElement = create_cube_element
 createSquareElement = create_square_element
+createLineElement = create_line_element
 findNodeWithName = find_node_with_name
 getNodeNameCentres = get_node_name_centres
 evaluateFieldNodesetRange = evaluate_field_nodeset_range

@@ -1,7 +1,7 @@
 import os
 import unittest
 from cmlibs.utils.zinc.field import createFieldMeshIntegral, findOrCreateFieldCoordinates, \
-    findOrCreateFieldGroup, findOrCreateFieldNodeGroup
+    findOrCreateFieldGroup
 from cmlibs.utils.zinc.finiteelement import createCubeElement, createSquareElement, createNodes, \
     createTriangleElements, evaluateFieldNodesetMean
 from cmlibs.zinc.context import Context
@@ -43,12 +43,7 @@ class ZincUtilsTestCase(unittest.TestCase):
         group = findOrCreateFieldGroup(fieldmodule, group_name)
         self.assertTrue(group.isValid())
         self.assertTrue(group.isManaged())
-        nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
-        node_group = findOrCreateFieldNodeGroup(group, nodes)
-        self.assertTrue(node_group.isValid())
-        self.assertFalse(node_group.isManaged())
-        node_group_name = group_name + "." + nodes.getName()
-        self.assertEqual(node_group_name, node_group.getName())
+        self.assertEqual(group.getName(), group_name)
 
     def test_create_nodes_and_elements(self):
         """
