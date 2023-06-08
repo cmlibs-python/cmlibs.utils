@@ -5,6 +5,7 @@ from cmlibs.maths import vectorops
 from cmlibs.utils.zinc.general import ChangeManager
 from cmlibs.zinc.element import Element, Elementbasis, Elementfieldtemplate, Mesh
 from cmlibs.zinc.field import Field
+from cmlibs.zinc.fieldmodule import Fieldmodule
 from cmlibs.zinc.node import Node, Nodeset
 from cmlibs.zinc.result import RESULT_OK
 
@@ -382,6 +383,18 @@ def get_element_node_identifiers_basis_order(element: Element, eft: Elementfield
     return node_identifiers
 
 
+def get_highest_dimension_mesh(fieldmodule: Fieldmodule):
+    """
+    Get highest dimension non-empty mesh in Zinc fieldmodule.
+    :return: Zinc Mesh or None if all are empty.
+    """
+    for dimension in range(3, 0, -1):
+        mesh = fieldmodule.findMeshByDimension(dimension)
+        if mesh.getSize() > 0:
+            return mesh
+    return None
+
+
 def get_maximum_element_identifier(mesh: Mesh) -> int:
     """
     :return: Maximum element identifier in mesh or -1 if none.
@@ -410,6 +423,18 @@ def get_maximum_node_identifier(nodeset: Nodeset) -> int:
             maximum_node_id = node_id
         node = node_iterator.next()
     return maximum_node_id
+
+
+def get_next_unused_node_identifier(nodeset: Nodeset, start_identifier=1) -> int:
+    """
+    :return: Unused node identifier >= start_identifier.
+    """
+    identifier = start_identifier
+    node = nodeset.findNodeByIdentifier(identifier)
+    while node.isValid():
+        identifier += 1
+        node = nodeset.findNodeByIdentifier(identifier)
+    return identifier
 
 
 createCubeElement = create_cube_element

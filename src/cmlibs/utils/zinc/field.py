@@ -27,6 +27,16 @@ def field_is_managed_group(field_in: Field):
     return field_in.castGroup().isValid() and field_in.isManaged()
 
 
+def field_is_managed_real_1_to_3_components(field_in: Field):
+    """
+    Conditional function returning True if the field is real-valued
+    with up to 3 components, and is managed.
+    Used e.g. for choosing a fibre field.
+    """
+    return (field_in.getValueType() == Field.VALUE_TYPE_REAL) and \
+        (field_in.getNumberOfComponents() <= 3) and field_in.isManaged()
+
+
 def assign_field_parameters(target_field: Field, source_field: Field):
     """
     Copy parameters from sourceField to targetField.
