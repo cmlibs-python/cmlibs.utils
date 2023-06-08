@@ -44,11 +44,12 @@ def group_add_group_nodes(group: FieldGroup, other_group: FieldGroup, fieldDomai
     :param fieldDomainType: Field DOMAIN_TYPE_NODES or DOMAIN_TYPE_DATAPOINTS.
     """
     other_fieldmodule = other_group.getFieldmodule()
-    other_nodeset_group = other_fieldmodule.findNodesetByFieldDomainType(fieldDomainType)
+    other_nodeset = other_fieldmodule.findNodesetByFieldDomainType(fieldDomainType)
+    other_nodeset_group = other_group.getNodesetGroup(other_nodeset)
     if other_nodeset_group.isValid() and (other_nodeset_group.getSize() > 0):
         region = group.getFieldmodule().getRegion()
         with HierarchicalChangeManager(region):
-            nodeset_group = group.getOrCreateNodesetGroup(nodeset)
+            nodeset_group = group.getOrCreateNodesetGroup(other_nodeset)
             nodeset_group.addNodesConditional(other_group)
 
 
