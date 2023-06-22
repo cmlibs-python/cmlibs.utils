@@ -31,7 +31,10 @@ readme.append('')
 
 software_licence = readfile("LICENSE")
 
-requires = ['cmlibs.maths', 'cmlibs.zinc']
+requires = [
+    'cmlibs.maths >= 0.3',
+    'cmlibs.zinc >= 4.0'
+]
 
 setup(
     name='cmlibs.utils',
