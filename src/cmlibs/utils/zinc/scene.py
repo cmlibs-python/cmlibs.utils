@@ -38,7 +38,7 @@ def scene_create_selection_group(scene: Scene, inherit_root_region: Region=None,
             assert selection_group.isValid(), "Invalid field is using reserved name '" + SELECTION_GROUP_NAME + "'"
             selection_group.clear()
             selection_group.setManaged(False)
-        if not selection_group.isValid():
+        else:
             selection_group = fieldmodule.createFieldGroup()
             selection_group.setName(SELECTION_GROUP_NAME)
             selection_group.setSubelementHandlingMode(subelementHandlingMode)
@@ -88,3 +88,11 @@ def scene_get_selection_group(scene: Scene, inherit_root_region: Region=None):
             if selection_group.isValid():
                 return selection_group
     return None
+
+
+def scene_get_or_create_selection_group(scene: Scene, inherit_root_region: Region=None):
+    selection_group = scene_get_selection_group(scene, inherit_root_region)
+    if selection_group is None:
+        selection_group = scene_create_selection_group(scene, inherit_root_region)
+
+    return selection_group
