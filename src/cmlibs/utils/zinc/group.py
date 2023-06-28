@@ -72,11 +72,11 @@ def group_get_highest_dimension(group: FieldGroup):
 
 
 def identifier_ranges_fix(identifier_ranges):
-    '''
+    """
     Sort from lowest to highest identifier and merge adjacent and overlapping
     ranges.
     :param identifier_ranges: List of identifier ranges. Modified in situ.
-    '''
+    """
     identifier_ranges.sort()
     i = 1
     while i < len(identifier_ranges):
@@ -89,7 +89,7 @@ def identifier_ranges_fix(identifier_ranges):
 
 
 def identifier_ranges_from_string(identifier_ranges_string):
-    '''
+    """
     Parse string containing identifiers and identifier ranges.
     Function is suitable for processing manual input with whitespace, trailing non-digits.
     Ranges are sorted so strictly increasing. Overlapping ranges are merged.
@@ -97,7 +97,7 @@ def identifier_ranges_from_string(identifier_ranges_string):
     :param identifier_ranges_string: Identifier ranges as a string e.g. '1-30,55,66-70'.
     '30-1, 55,66-70s' also produces the same result.
     :return: Ordered list of identifier ranges e.g. [[1,30],[55,55],[66,70]]
-    '''
+    """
     identifier_ranges = []
     for identifier_range_string in identifier_ranges_string.split(','):
         try:
@@ -127,12 +127,12 @@ def identifier_ranges_from_string(identifier_ranges_string):
 
 
 def identifier_ranges_to_string(identifier_ranges):
-    '''
+    """
     Convert ranges to a string, contracting single object ranges.
     Future: migrate to use .. as separator for compatibility with EX file groups and cmgui.
     :param identifier_ranges: Ordered list of identifier ranges e.g. [[1,30],[55,55],[66,70]]
     :return: Identifier ranges as a string e.g. '1-30,55,66-70'
-    '''
+    """
     identifier_ranges_string = ''
     first = True
     for identifier_range in identifier_ranges:
@@ -149,13 +149,13 @@ def identifier_ranges_to_string(identifier_ranges):
 
 
 def domain_iterator_to_identifier_ranges(iterator):
-    '''
+    """
     Extract sorted identifier ranges from iterator.
     Currently requires iterator to be in lowest-highest identifier order.
     Objects must support getIdentifier() method returning unique integer.
     :param iterator: A Zinc Elementiterator or Nodeiterator.
     :return: List of sorted identifier ranges [start,stop] e.g. [[1,30],[55,55],[66,70]]
-    '''
+    """
     identifier_ranges = []
     obj = iterator.next()
     if obj.isValid():
@@ -174,10 +174,10 @@ def domain_iterator_to_identifier_ranges(iterator):
 
 
 def mesh_group_add_identifier_ranges(mesh_group, identifier_ranges):
-    '''
+    """
     Add elements with the supplied identifier ranges to mesh_group.
     :param mesh_group: Zinc MeshGroup to modify.
-    '''
+    """
     mesh = mesh_group.getMasterMesh()
     fieldmodule = mesh.getFieldmodule()
     with ChangeManager(fieldmodule):
@@ -188,18 +188,18 @@ def mesh_group_add_identifier_ranges(mesh_group, identifier_ranges):
 
 
 def mesh_group_to_identifier_ranges(mesh_group):
-    '''
+    """
     :param mesh_group: Zinc MeshGroup.
     :return: Ordered list of element identifier ranges e.g. [[1,30],[55,55],[66,70]]
-    '''
+    """
     return domain_iterator_to_identifier_ranges(mesh_group.createElementiterator())
 
 
 def nodeset_group_add_identifier_ranges(nodeset_group, identifier_ranges):
-    '''
+    """
     Add nodes with the supplied identifier ranges to nodeset_group.
     :param nodeset_group: Zinc NodesetGroup to modify.
-    '''
+    """
     nodeset = nodeset_group.getMasterNodeset()
     fieldmodule = nodeset.getFieldmodule()
     with ChangeManager(fieldmodule):
@@ -210,8 +210,8 @@ def nodeset_group_add_identifier_ranges(nodeset_group, identifier_ranges):
 
 
 def nodeset_group_to_identifier_ranges(nodeset_group):
-    '''
+    """
     :param nodeset_group: Zinc NodesetGroup.
     :return: Ordered list of node identifier ranges e.g. [[1,30],[55,55],[66,70]]
-    '''
+    """
     return domain_iterator_to_identifier_ranges(nodeset_group.createNodeiterator())

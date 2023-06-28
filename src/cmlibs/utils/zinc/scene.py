@@ -6,11 +6,10 @@ from cmlibs.zinc.field import FieldGroup
 from cmlibs.zinc.scene import Scene
 from cmlibs.zinc.region import Region
 
-
 SELECTION_GROUP_NAME = '.scene_selection'
 
 
-def scene_create_selection_group(scene: Scene, inherit_root_region: Region=None,
+def scene_create_selection_group(scene: Scene, inherit_root_region: Region = None,
                                  subelementHandlingMode=FieldGroup.SUBELEMENT_HANDLING_MODE_FULL):
     """
     Create empty, unmanaged scene selection group of standard name.
@@ -48,7 +47,7 @@ def scene_create_selection_group(scene: Scene, inherit_root_region: Region=None,
     return selection_group
 
 
-def scene_get_ancestor_selection_group(scene: Scene, inherit_root_region: Region=None):
+def scene_get_ancestor_selection_group(scene: Scene, inherit_root_region: Region = None):
     """
     Get selection group set for nearest ancestor of scene, if any.
     :param scene: Zinc Scene to get ancestroy selection group for.
@@ -70,11 +69,11 @@ def scene_get_ancestor_selection_group(scene: Scene, inherit_root_region: Region
     return None
 
 
-def scene_get_selection_group(scene: Scene, inherit_root_region: Region=None):
+def scene_get_selection_group(scene: Scene, inherit_root_region: Region = None):
     """
     Get scene selection group directly set in scene or inherited from ancestor scene's selection group.
     :param scene: Zinc Scene to get existing selection group for.
-    :param inherit_root_region: If set, find selection group in any ancestor up to thie region
+    :param inherit_root_region: If set, find selection group in any ancestor up to this region
     and return subregion group for scene's region. If not set, only get selection group explicitly set in scene.
     :return: Existing selection FieldGroup in scene's region, or None.
     """
@@ -90,7 +89,7 @@ def scene_get_selection_group(scene: Scene, inherit_root_region: Region=None):
     return None
 
 
-def scene_get_or_create_selection_group(scene: Scene, inherit_root_region: Region=None):
+def scene_get_or_create_selection_group(scene: Scene, inherit_root_region: Region = None):
     selection_group = scene_get_selection_group(scene, inherit_root_region)
     if selection_group is None:
         selection_group = scene_create_selection_group(scene, inherit_root_region)
