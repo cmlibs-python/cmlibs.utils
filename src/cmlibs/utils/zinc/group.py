@@ -35,16 +35,16 @@ def group_add_group_elements(group: FieldGroup, other_group: FieldGroup, highest
                     nodeset_group.addNodesConditional(other_group)
 
 
-def group_add_group_nodes(group: FieldGroup, other_group: FieldGroup, fieldDomainType):
+def group_add_group_nodes(group: FieldGroup, other_group: FieldGroup, field_domain_type):
     """
     Add to group nodes or datapoints from other_group, which may be in the same or a descendent region.
     Note only objects from other_group's region are added.
     :param group:  Zinc FieldGroup to modify.
     :param other_group:  Zinc FieldGroup to add nodes from.
-    :param fieldDomainType: Field DOMAIN_TYPE_NODES or DOMAIN_TYPE_DATAPOINTS.
+    :param field_domain_type: Field DOMAIN_TYPE_NODES or DOMAIN_TYPE_DATAPOINTS.
     """
     other_fieldmodule = other_group.getFieldmodule()
-    other_nodeset = other_fieldmodule.findNodesetByFieldDomainType(fieldDomainType)
+    other_nodeset = other_fieldmodule.findNodesetByFieldDomainType(field_domain_type)
     other_nodeset_group = other_group.getNodesetGroup(other_nodeset)
     if other_nodeset_group.isValid() and (other_nodeset_group.getSize() > 0):
         region = group.getFieldmodule().getRegion()
