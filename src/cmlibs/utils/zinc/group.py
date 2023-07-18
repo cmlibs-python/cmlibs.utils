@@ -2,37 +2,119 @@
 Utilities for creating and working with Zinc Groups and selection.
 """
 
+from enum import Enum
+
 from cmlibs.utils.zinc.general import ChangeManager, HierarchicalChangeManager
 from cmlibs.zinc.field import Field, FieldGroup
+
+
+class GroupOperator(Enum):
+    ADD = 1     # Add elements/nodes to the selected group.
+    REMOVE = 2  # Remove elements/nodes from the selected group.
 
 
 def group_add_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension_only=True):
     """
     Add to group elements and/or nodes from other_group, which may be in the same or a descendent region.
     Note only objects from other_group's region are added.
+
     :param group: The FieldGroup to modify.
     :param other_group: FieldGroup within region tree of group's region to add contents from.
-    :param highest_dimension_only: If set (default), only add elements of
-    highest dimension present in other_group, otherwise add all dimensions.
+    :param highest_dimension_only: If set (default), only add elements of highest dimension mesh group present in other_group,
+        otherwise do this for all dimensions.
+    """
+    _group_update_group_elements(group, other_group, highest_dimension_only, GroupOperator.ADD)
+
+
+def group_add_not_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension_only=True):
+    """
+    Add to group elements and/or nodes from the underlying model that are not in other_group, which may be in the same or a descendent
+    region.
+    Note only objects from other_group's region are added.
+
+    :param group: The FieldGroup to modify.
+    :param other_group: FieldGroup within region tree of group's region whose complement elements should be added to group.
+    :param highest_dimension_only: If set (default), only add elements not in the highest dimension mesh group present in other_group,
+        otherwise do this for all dimensions.
+    """
+    _group_update_group_elements(group, other_group, highest_dimension_only, GroupOperator.ADD, complement=True)
+
+
+def group_remove_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension_only=True):
+    """
+    Remove from group elements and/or nodes from other_group, which may be in the same or a descendent region.
+    Note only objects from other_group's region are removed.
+
+    :param group: The FieldGroup to modify.
+    :param other_group: FieldGroup within region tree of group's region whose elements should be removed from group.
+    :param highest_dimension_only: If set (default), only remove elements of highest dimension present in other_group, otherwise remove
+        elements of all dimensions.
+    """
+    _group_update_group_elements(group, other_group, highest_dimension_only, GroupOperator.REMOVE)
+
+
+def group_remove_not_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension_only=True):
+    """
+    Remove from group elements and/or nodes from the underlying model that are not in other_group, which may be in the same or a descendent
+    region.
+    Note only objects from other_group's region are removed.
+
+    :param group: The FieldGroup to modify.
+    :param other_group: FieldGroup within region tree of group's region whose complement elements should be removed from group.
+    :param highest_dimension_only: If set (default), only remove elements not in the highest dimension mesh group present in other_group,
+        otherwise do this for all dimensions.
+    """
+    _group_update_group_elements(group, other_group, highest_dimension_only, GroupOperator.REMOVE, complement=True)
+
+
+def _group_update_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension_only, operation, complement=False):
+    """
+    Base function for add/remove group-elements functions.
+
+    :param group: The FieldGroup to modify.
+    :param other_group: FieldGroup within region tree of group's region to use a basis for add/remove operation.
+    :param highest_dimension_only: If set (default), only consider elements in the highest dimension mesh group present in other_group,
+        otherwise do this for all dimensions. Note this includes dimension 0 = nodes.
+    :param operation: The operation (Add or Remove) to be performed on the groups.
+    :param complement: If set, other_group will be replaced with it's complement element group in the underlying model. Therefore the
+        function will use all elements and/or nodes from the underlying model that are NOT in other_group as the basis of the operation.
     """
     region = group.getFieldmodule().getRegion()
     with HierarchicalChangeManager(region):
         other_fieldmodule = other_group.getFieldmodule()
+        conditional_group = other_fieldmodule.createFieldNot(other_group) if complement else other_group
         for dimension in range(3, -1, -1):
             if dimension > 0:
                 mesh = other_fieldmodule.findMeshByDimension(dimension)
+                if mesh.getSize() == 0:
+                    continue
                 other_mesh_group = other_group.getMeshGroup(mesh)
-                if other_mesh_group.isValid() and (other_mesh_group.getSize() > 0):
+                if not other_mesh_group.isValid():
+                    continue
+                if operation == GroupOperator.ADD:
                     mesh_group = group.getOrCreateMeshGroup(mesh)
-                    mesh_group.addElementsConditional(other_group)
-                    if highest_dimension_only:
-                        return
+                    mesh_group.addElementsConditional(conditional_group)
+                elif operation == GroupOperator.REMOVE:
+                    mesh_group = group.getMeshGroup(mesh)
+                    if mesh_group.isValid():
+                        mesh_group.removeElementsConditional(conditional_group)
+                if highest_dimension_only:
+                    return
             elif dimension == 0:
                 nodeset = other_fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+                if nodeset.getSize() == 0:
+                    continue
                 other_nodeset_group = other_group.getNodesetGroup(nodeset)
-                if other_nodeset_group.isValid() and (other_nodeset_group.getSize() > 0):
+                if not other_nodeset_group.isValid():
+                    continue
+                if operation == GroupOperator.ADD:
                     nodeset_group = group.getOrCreateNodesetGroup(nodeset)
-                    nodeset_group.addNodesConditional(other_group)
+                    nodeset_group.addNodesConditional(conditional_group)
+                elif operation == GroupOperator.REMOVE:
+                    nodeset_group = group.getNodesetGroup(nodeset)
+                    if nodeset_group.isValid():
+                        nodeset_group.removeNodesConditional(conditional_group)
+        del conditional_group
 
 
 def group_add_group_nodes(group: FieldGroup, other_group: FieldGroup, field_domain_type):
