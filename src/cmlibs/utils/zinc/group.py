@@ -13,20 +13,21 @@ class GroupOperator(Enum):
     REMOVE = 2  # Remove elements/nodes from the selected group.
 
 
-def group_add_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension_only=True):
+def group_add_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension=3, highest_dimension_only=True):
     """
     Add to group elements and/or nodes from other_group, which may be in the same or a descendent region.
     Note only objects from other_group's region are added.
 
     :param group: The FieldGroup to modify.
     :param other_group: FieldGroup within region tree of group's region to add contents from.
+    :param highest_dimension: The highest dimension of the mesh to be used for the operation.
     :param highest_dimension_only: If set (default), only add elements of highest dimension mesh group present in other_group,
         otherwise do this for all dimensions.
     """
-    _group_update_group_elements(group, other_group, highest_dimension_only, GroupOperator.ADD)
+    _group_update_group_elements(group, other_group, highest_dimension, highest_dimension_only, GroupOperator.ADD)
 
 
-def group_add_not_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension_only=True):
+def group_add_not_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension=3, highest_dimension_only=True):
     """
     Add to group elements and/or nodes from the underlying model that are not in other_group, which may be in the same or a descendent
     region.
@@ -34,26 +35,28 @@ def group_add_not_group_elements(group: FieldGroup, other_group: FieldGroup, hig
 
     :param group: The FieldGroup to modify.
     :param other_group: FieldGroup within region tree of group's region whose complement elements should be added to group.
+    :param highest_dimension: The highest dimension of the mesh to be used for the operation.
     :param highest_dimension_only: If set (default), only add elements not in the highest dimension mesh group present in other_group,
         otherwise do this for all dimensions.
     """
-    _group_update_group_elements(group, other_group, highest_dimension_only, GroupOperator.ADD, complement=True)
+    _group_update_group_elements(group, other_group, highest_dimension, highest_dimension_only, GroupOperator.ADD, complement=True)
 
 
-def group_remove_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension_only=True):
+def group_remove_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension=3, highest_dimension_only=True):
     """
     Remove from group elements and/or nodes from other_group, which may be in the same or a descendent region.
     Note only objects from other_group's region are removed.
 
     :param group: The FieldGroup to modify.
     :param other_group: FieldGroup within region tree of group's region whose elements should be removed from group.
+    :param highest_dimension: The highest dimension of the mesh to be used for the operation.
     :param highest_dimension_only: If set (default), only remove elements of highest dimension present in other_group, otherwise remove
         elements of all dimensions.
     """
-    _group_update_group_elements(group, other_group, highest_dimension_only, GroupOperator.REMOVE)
+    _group_update_group_elements(group, other_group, highest_dimension, highest_dimension_only, GroupOperator.REMOVE)
 
 
-def group_remove_not_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension_only=True):
+def group_remove_not_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension=3, highest_dimension_only=True):
     """
     Remove from group elements and/or nodes from the underlying model that are not in other_group, which may be in the same or a descendent
     region.
@@ -61,18 +64,21 @@ def group_remove_not_group_elements(group: FieldGroup, other_group: FieldGroup, 
 
     :param group: The FieldGroup to modify.
     :param other_group: FieldGroup within region tree of group's region whose complement elements should be removed from group.
+    :param highest_dimension: The highest dimension of the mesh to be used for the operation.
     :param highest_dimension_only: If set (default), only remove elements not in the highest dimension mesh group present in other_group,
         otherwise do this for all dimensions.
     """
-    _group_update_group_elements(group, other_group, highest_dimension_only, GroupOperator.REMOVE, complement=True)
+    _group_update_group_elements(group, other_group, highest_dimension, highest_dimension_only, GroupOperator.REMOVE, complement=True)
 
 
-def _group_update_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension_only, operation, complement=False):
+def _group_update_group_elements(group: FieldGroup, other_group: FieldGroup, highest_dimension, highest_dimension_only, operation,
+                                 complement=False):
     """
     Base function for add/remove group-elements functions.
 
     :param group: The FieldGroup to modify.
     :param other_group: FieldGroup within region tree of group's region to use a basis for add/remove operation.
+    :param highest_dimension: The highest dimension of the mesh to be used for the operation.
     :param highest_dimension_only: If set (default), only consider elements in the highest dimension mesh group present in other_group,
         otherwise do this for all dimensions. Note this includes dimension 0 = nodes.
     :param operation: The operation (Add or Remove) to be performed on the groups.
@@ -83,7 +89,7 @@ def _group_update_group_elements(group: FieldGroup, other_group: FieldGroup, hig
     with HierarchicalChangeManager(region):
         other_fieldmodule = other_group.getFieldmodule()
         conditional_group = other_fieldmodule.createFieldNot(other_group) if complement else other_group
-        for dimension in range(3, -1, -1):
+        for dimension in range(highest_dimension, -1, -1):
             if dimension > 0:
                 mesh = other_fieldmodule.findMeshByDimension(dimension)
                 if mesh.getSize() == 0:
