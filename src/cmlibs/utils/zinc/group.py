@@ -122,7 +122,7 @@ def _group_update_group_elements(group: FieldGroup, other_group: FieldGroup, hig
                     if mesh_group.isValid():
                         mesh_group.removeElementsConditional(conditional_group)
                 if highest_dimension_only:
-                    return
+                    break
             elif dimension == 0:
                 nodeset = other_fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
                 if nodeset.getSize() == 0:
