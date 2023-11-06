@@ -437,6 +437,25 @@ def get_next_unused_node_identifier(nodeset: Nodeset, start_identifier=1) -> int
     return identifier
 
 
+def get_identifiers(nodeset: Nodeset) -> list:
+    """
+    Create a list of all the identifiers used in the given nodeset.
+
+    :param nodeset: Nodeset to search for identifiers.
+    :return: A list of identifiers used by the given nodeset.
+    """
+    identifiers = [None] * nodeset.getSize()
+    node_iterator = nodeset.createNodeiterator()
+    node = node_iterator.next()
+    node_index = 0
+    while node.isValid():
+        identifiers[node_index] = node.getIdentifier()
+        node_index += 1
+        node = node_iterator.next()
+
+    return identifiers
+
+
 createCubeElement = create_cube_element
 createSquareElement = create_square_element
 createLineElement = create_line_element
