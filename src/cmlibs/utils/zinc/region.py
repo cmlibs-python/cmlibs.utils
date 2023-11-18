@@ -1,4 +1,4 @@
-from cmlibs.utils.zinc.finiteelement import get_identifiers
+from cmlibs.utils.zinc.finiteelement import get_identifiers, evaluate_field_nodeset_range
 from cmlibs.zinc.field import Field
 from cmlibs.zinc.result import RESULT_OK
 
@@ -79,3 +79,40 @@ def copy_nodeset(region, nodeset):
     sir.createStreamresourceMemoryBuffer(buffer)
     result = region.read(sir)
     assert result == RESULT_OK, f"Failed to load {nodeset.getName()}, result " + str(result)
+
+
+def determine_appropriate_glyph_size(region, coordinates):
+    fm = region.getFieldmodule()
+    with ChangeManager(fm):
+        fieldcache = fm.createFieldcache()
+        nodes = fm.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+        components_count = coordinates.getNumberOfComponents()
+        # fixed width glyph size is based on average element size in all dimensions
+        mesh1d = fm.findMeshByDimension(1)
+        line_count = mesh1d.getSize()
+        if line_count > 0:
+            one = fm.createFieldConstant(1.0)
+            sum_line_length = fm.createFieldMeshIntegral(one, coordinates, mesh1d)
+            result, total_line_length = sum_line_length.evaluateReal(fieldcache, 1)
+            glyph_width = 0.1 * total_line_length / line_count
+            del sum_line_length
+            del one
+        if (line_count == 0) or (glyph_width == 0.0):
+            # fallback if no lines: use graphics range
+            min_x, max_x = evaluate_field_nodeset_range(coordinates, nodes)
+            # use function of coordinate range if no elements
+            if components_count == 1:
+                max_scale = max_x - min_x
+            else:
+                first = True
+                for c in range(components_count):
+                    scale = max_x[c] - min_x[c]
+                    if first or (scale > max_scale):
+                        max_scale = scale
+                        first = False
+            if max_scale == 0.0:
+                max_scale = 1.0
+            glyph_width = 0.01 * max_scale
+        del fieldcache
+
+    return glyph_width

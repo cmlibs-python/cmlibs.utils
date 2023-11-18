@@ -1,8 +1,11 @@
 """
 Utilities for working with zinc Scene including selection group.
 """
+from cmlibs.zinc.glyph import Glyph
+from cmlibs.zinc.graphics import Graphics
+
 from cmlibs.utils.zinc.general import ChangeManager, HierarchicalChangeManager
-from cmlibs.zinc.field import FieldGroup
+from cmlibs.zinc.field import FieldGroup, Field
 from cmlibs.zinc.scene import Scene
 from cmlibs.zinc.region import Region
 
@@ -95,3 +98,58 @@ def scene_get_or_create_selection_group(scene: Scene, inherit_root_region: Regio
         selection_group = scene_create_selection_group(scene, inherit_root_region)
 
     return selection_group
+
+
+def scene_clear_selection_group(scene: Scene):
+    selectionGroup = scene_get_selection_group(scene)
+    if selectionGroup is not None:
+        selectionGroup.clear()
+        selectionGroup = Field()  # NULL
+        scene.setSelectionField(selectionGroup)
+
+
+def scene_create_node_derivative_graphics(scene, coordinates, node_derivative_fields, glyph_width, node_derivative_labels=None,
+                                          display_node_derivatives=0, display_node_derivative_labels=None):
+    """
+    display_node_derivatives  # tri-state: 0=show none, 1=show selected, 2=show all
+    display_node_derivative_labels # A list of derivative labels to display, 'D1', 'D2', etc.
+    """
+    mm = scene.getMaterialmodule()
+    # names in same order as self._nodeDerivativeLabels 'D1', 'D2', 'D3', 'D12', 'D13', 'D23', 'D123' and nodeDerivativeFields
+
+    node_derivative_material_names = ['gold', 'silver', 'green', 'cyan', 'magenta', 'yellow', 'blue']
+    length_node_derivative_material_names = len(node_derivative_material_names)
+    derivativeScales = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+    if node_derivative_labels is None:
+        node_derivative_labels = ['D1', 'D2', 'D3', 'D12', 'D13', 'D23', 'D123']
+
+    if display_node_derivative_labels is None:
+        display_node_derivative_labels = ['D1', 'D2', 'D3', 'D12', 'D13', 'D23', 'D123']
+
+    node_derivative_graphics = []
+    with ChangeManager(scene):
+        for i, node_derivative_label in enumerate(node_derivative_labels):
+            max_versions = len(node_derivative_fields[i])
+            for v in range(max_versions):
+                node_derivatives = scene.createGraphicsPoints()
+                node_derivative_graphics.append(node_derivatives)
+                node_derivatives.setFieldDomainType(Field.DOMAIN_TYPE_NODES)
+                node_derivatives.setCoordinateField(coordinates)
+                point_attr = node_derivatives.getGraphicspointattributes()
+                point_attr.setGlyphShapeType(Glyph.SHAPE_TYPE_ARROW_SOLID)
+                point_attr.setOrientationScaleField(node_derivative_fields[i][v])
+                point_attr.setBaseSize([0.0, glyph_width, glyph_width])
+                point_attr.setScaleFactors([derivativeScales[i], 0.0, 0.0])
+                if max_versions > 1:
+                    point_attr.setLabelOffset([1.05, 0.0, 0.0])
+                    point_attr.setLabelText(1, str(v + 1))
+                material = mm.findMaterialByName(node_derivative_material_names[i % length_node_derivative_material_names])
+                node_derivatives.setMaterial(material)
+                node_derivatives.setSelectedMaterial(material)
+                node_derivatives.setName('displayNodeDerivatives' + node_derivative_label)
+
+                node_derivatives.setSelectMode(Graphics.SELECT_MODE_DRAW_SELECTED if (display_node_derivatives == 1) else Graphics.SELECT_MODE_ON)
+                node_derivatives.setVisibilityFlag(bool(display_node_derivatives) and node_derivative_label in display_node_derivative_labels)
+
+    return node_derivative_graphics
