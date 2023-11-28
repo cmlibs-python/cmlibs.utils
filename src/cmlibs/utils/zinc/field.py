@@ -694,6 +694,20 @@ def determine_node_field_derivatives(region, coordinates, include_versions=False
     return node_derivative_fields
 
 
+def find_coordinate_fields(region):
+    fm = region.getFieldmodule()
+    fi = fm.createFielditerator()
+    field = fi.next()
+    field_list = []
+    while field.isValid():
+        if field.isTypeCoordinate() and (field.getNumberOfComponents() == 3) and (field.castFiniteElement().isValid()):
+            field_list.append(field)
+
+        field = fi.next()
+
+    return field_list
+
+
 # Create C++ style aliases for names of functions.
 createFieldsDisplacementGradients = create_fields_displacement_gradients
 createFieldsTransformations = create_fields_transformations

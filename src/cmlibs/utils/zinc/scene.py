@@ -109,7 +109,7 @@ def scene_clear_selection_group(scene: Scene):
 
 
 def scene_create_node_derivative_graphics(scene, coordinates, node_derivative_fields, glyph_width, node_derivative_labels=None,
-                                          display_node_derivatives=0, display_node_derivative_labels=None):
+                                          display_node_derivatives=0, display_node_derivative_labels=None, domain=Field.DOMAIN_TYPE_NODES):
     """
     display_node_derivatives  # tri-state: 0=show none, 1=show selected, 2=show all
     display_node_derivative_labels # A list of derivative labels to display, 'D1', 'D2', etc.
@@ -134,13 +134,14 @@ def scene_create_node_derivative_graphics(scene, coordinates, node_derivative_fi
             for v in range(max_versions):
                 node_derivatives = scene.createGraphicsPoints()
                 node_derivative_graphics.append(node_derivatives)
-                node_derivatives.setFieldDomainType(Field.DOMAIN_TYPE_NODES)
+                node_derivatives.setFieldDomainType(domain)
                 node_derivatives.setCoordinateField(coordinates)
                 point_attr = node_derivatives.getGraphicspointattributes()
                 point_attr.setGlyphShapeType(Glyph.SHAPE_TYPE_ARROW_SOLID)
                 point_attr.setOrientationScaleField(node_derivative_fields[i][v])
                 point_attr.setBaseSize([0.0, glyph_width, glyph_width])
                 point_attr.setScaleFactors([derivativeScales[i], 0.0, 0.0])
+                point_attr.setLabelText(1, f"node_label_{node_derivative_label}")
                 if max_versions > 1:
                     point_attr.setLabelOffset([1.05, 0.0, 0.0])
                     point_attr.setLabelText(1, str(v + 1))
