@@ -318,13 +318,13 @@ def create_nodes(finite_element_field, node_coordinate_set, node_set_name='nodes
     """
     Create a node for every coordinate in the node_coordinate_set.
 
-    :param finite_element_field:
-    :param node_coordinate_set:
-    :param node_set_name:
+    :param finite_element_field: Finite element field to assign node coordinates to.
+    :param node_coordinate_set: A list of node coordinates of the same dimension as the finite element field.
+    :param node_set_name: The name of the nodeset to create the node in, either 'nodes' (default) or 'datapoints'.
     :param time: The time to set for the node, defaults to None for nodes that are not time aware.
     :param node_set: The node set to use for creating nodes, if not set then the node set for creating nodes is
                      chosen by node_set_name.
-    :return: None
+    :return: A list of nodes.
     """
     fieldmodule = finite_element_field.getFieldmodule()
     # Find a special node set named 'nodes'
@@ -337,14 +337,19 @@ def create_nodes(finite_element_field, node_coordinate_set, node_set_name='nodes
     # Set the finite element coordinate field for the nodes to use
     node_template.defineField(finite_element_field)
     field_cache = fieldmodule.createFieldcache()
-    for node_coordinate in node_coordinate_set:
+    nodes = [None] * len(node_coordinate_set)
+    for index, node_coordinate in enumerate(node_coordinate_set):
         node = nodeset.createNode(-1, node_template)
         # Set the node coordinates, first set the field cache to use the current node
         field_cache.setNode(node)
         if time:
             field_cache.setTime(time)
         # Pass in floats as an array
-        finite_element_field.assignReal(field_cache, node_coordinate)
+        result = finite_element_field.assignReal(field_cache, node_coordinate)
+        if result == RESULT_OK:
+            nodes[index] = node
+
+    return nodes
 
 
 def get_element_node_identifiers(element: Element, eft: Elementfieldtemplate) -> list:
