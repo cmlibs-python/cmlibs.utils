@@ -154,3 +154,79 @@ def scene_create_node_derivative_graphics(scene, coordinates, node_derivative_fi
                 node_derivatives.setVisibilityFlag(bool(display_node_derivatives) and node_derivative_label in display_node_derivative_labels)
 
     return node_derivative_graphics
+
+
+def create_plane_manipulation_sphere(scene, name='plane_rotation_sphere', size=10.0):
+    """
+    Create a sphere graphics object in the Zinc Scene provided.
+
+    :param scene: The Zinc Scene to create the graphics in.
+    :param name: Optional; The name of the graphics object.
+    :param size: Optional; The size of the graphics object.
+    """
+    scene.beginChange()
+
+    plane_rotation_sphere = scene.createGraphicsPoints()
+    plane_rotation_sphere.setName(name)
+    plane_rotation_sphere.setFieldDomainType(Field.DOMAIN_TYPE_POINT)
+    plane_rotation_sphere.setVisibilityFlag(False)
+    fm = scene.getRegion().getFieldmodule()
+    zero_field = fm.createFieldConstant([0, 0, 0])
+    plane_rotation_sphere.setCoordinateField(zero_field)
+    tessellation = plane_rotation_sphere.getTessellation()
+    tessellation.setCircleDivisions(24)
+    plane_rotation_sphere.setTessellation(tessellation)
+    attributes = plane_rotation_sphere.getGraphicspointattributes()
+    attributes.setGlyphShapeType(Glyph.SHAPE_TYPE_SPHERE)
+    attributes.setBaseSize(size)
+
+    scene.endChange()
+
+    return plane_rotation_sphere
+
+
+def create_plane_manipulation_arrow(scene, orientation_scale_field, name='plane_translation_arrow', size=25.0):
+    """
+    Create an arrow graphics object in the Zinc Scene provided.
+
+    :param scene: The Zinc Scene to create the graphics in.
+    :param orientation_scale_field: A Zinc Field defining the orientation and scaling of the arrow.
+    :param name: Optional; The name of the graphics object.
+    :param size: Optional; The size of the graphics object.
+    """
+    scene.beginChange()
+    plane_normal_indicator = scene.createGraphicsPoints()
+    plane_normal_indicator.setName(name)
+    plane_normal_indicator.setFieldDomainType(Field.DOMAIN_TYPE_POINT)
+    plane_normal_indicator.setVisibilityFlag(False)
+
+    fm = scene.getRegion().getFieldmodule()
+    zero_field = fm.createFieldConstant([0, 0, 0])
+    plane_normal_indicator.setCoordinateField(zero_field)
+
+    attributes = plane_normal_indicator.getGraphicspointattributes()
+    attributes.setGlyphShapeType(Glyph.SHAPE_TYPE_ARROW_SOLID)
+    attributes.setBaseSize([size, size / 4, size / 4])
+    attributes.setScaleFactors([0, 0, 0])
+    attributes.setOrientationScaleField(orientation_scale_field)
+
+    scene.endChange()
+
+    return plane_normal_indicator
+
+
+def set_glyph_position(glyph, position):
+    if position is not None:
+        position_field = glyph.getCoordinateField()
+        field_module = position_field.getFieldmodule()
+        field_cache = field_module.createFieldcache()
+        position_field.assignReal(field_cache, position)
+
+
+def get_glyph_position(glyph):
+    position_field = glyph.getCoordinateField()
+    field_module = position_field.getFieldmodule()
+    field_cache = field_module.createFieldcache()
+    _, position = position_field.evaluateReal(field_cache, 3)
+
+    return position
