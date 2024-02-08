@@ -6,8 +6,8 @@ from cmlibs.zinc.element import Mesh
 from cmlibs.zinc.field import Field, FieldFiniteElement, FieldGroup, \
     FieldStoredMeshLocation
 from cmlibs.zinc.fieldmodule import Fieldmodule
-from cmlibs.zinc.node import Nodeset
-from cmlibs.zinc.result import RESULT_OK
+from cmlibs.zinc.node import Nodeset, Node
+from cmlibs.zinc.result import RESULT_OK, RESULT_WARNING_PART_DONE
 
 
 def field_is_managed_coordinates(field_in: Field):
@@ -650,6 +650,62 @@ def orphan_field_by_name(fieldmodule: Fieldmodule, name: str):
     if field.isValid():
         field.setName(get_unique_field_name(fieldmodule, ".destroy_" + name))
         field.setManaged(False)
+
+
+def determine_node_field_derivatives(region, coordinates, include_versions=False):
+    fm = region.getFieldmodule()
+    with ChangeManager(fm):
+        nodes = fm.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+        fc = fm.createFieldcache()
+        coordinates = coordinates.castFiniteElement()
+        if not coordinates.isValid():
+            return []
+
+        components_count = coordinates.getNumberOfComponents()
+
+        # determine field derivatives for all versions in use: fairly expensive
+        # fields in same order as self._nodeDerivativeLabels
+        node_derivatives = [Node.VALUE_LABEL_D_DS1, Node.VALUE_LABEL_D_DS2, Node.VALUE_LABEL_D_DS3,
+                            Node.VALUE_LABEL_D2_DS1DS2, Node.VALUE_LABEL_D2_DS1DS3, Node.VALUE_LABEL_D2_DS2DS3, Node.VALUE_LABEL_D3_DS1DS2DS3]
+        node_derivative_fields = [[fm.createFieldNodeValue(coordinates, nodeDerivative, 1)] for nodeDerivative in node_derivatives]
+        derivatives_count = len(node_derivatives)
+        max_versions = [1] * derivatives_count
+        last_version = 1
+        version = 2
+        while True:
+            nodeIter = nodes.createNodeiterator()
+            node = nodeIter.next()
+            found_count = sum((1 if (v < last_version) else 0) for v in max_versions)
+            while (node.isValid()) and (found_count < derivatives_count):
+                fc.setNode(node)
+                for d in range(derivatives_count):
+                    if max_versions[d] == last_version:  # only look one higher than last version found
+                        result, values = coordinates.getNodeParameters(fc, -1, node_derivatives[d], version, components_count)
+                        if (result == RESULT_OK) or (result == RESULT_WARNING_PART_DONE):
+                            max_versions[d] = version
+                            node_derivative_fields[d].append(fm.createFieldNodeValue(coordinates, node_derivatives[d], version))
+                            found_count += 1
+                node = nodeIter.next()
+            if found_count >= derivatives_count or not include_versions:
+                break
+            last_version = version
+            version += 1
+
+    return node_derivative_fields
+
+
+def find_coordinate_fields(region):
+    fm = region.getFieldmodule()
+    fi = fm.createFielditerator()
+    field = fi.next()
+    field_list = []
+    while field.isValid():
+        if field.isTypeCoordinate() and (field.getNumberOfComponents() == 3) and (field.castFiniteElement().isValid()):
+            field_list.append(field)
+
+        field = fi.next()
+
+    return field_list
 
 
 # Create C++ style aliases for names of functions.
