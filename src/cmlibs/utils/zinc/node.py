@@ -8,6 +8,37 @@ from cmlibs.maths.vectorops import dot, add, sub, mult, matrix_vector_mult
 from cmlibs.utils.zinc.general import ChangeManager
 
 
+def get_field_values(region, evaluation_field, domain_type=Field.DOMAIN_TYPE_NODES):
+    """
+    Get the values (real valued) for all the nodes/datapoints in the domain specified by domain_type.
+    Returns the values as a list of lists, each list is the size of the number of
+    values in the evaluated field.
+
+    :param region: The Zinc Region whose nodes are to be queried.
+    :param evaluation_field: A real valued field.
+    :param domain_type: The node/datapoint domain to use for evaluating, default is DOMAIN_TYPE_NODES.
+
+    :returns: A list of lists.
+    """
+    fm = region.getFieldmodule()
+    fc = fm.createFieldcache()
+
+    nodes = fm.findNodesetByFieldDomainType(domain_type)
+    node_iter = nodes.createNodeiterator()
+    number_of_components = evaluation_field.getNumberOfComponents()
+
+    node_values = []
+    node = node_iter.next()
+    while node.isValid():
+        fc.setNode(node)
+        result, x = evaluation_field.evaluateReal(fc, number_of_components)
+        if result == RESULT_OK:
+            node_values.append(x)
+        node = node_iter.next()
+
+    return node_values
+
+
 def rotate_nodes(region, rotation_matrix, rotation_point, coordinate_field_name='coordinates'):
     """
     Rotate all nodes in the given region around the rotation point specified.

@@ -185,7 +185,7 @@ def create_plane_manipulation_sphere(scene, name='plane_rotation_sphere', size=1
     return plane_rotation_sphere
 
 
-def create_plane_manipulation_arrow(scene, orientation_scale_field, name='plane_translation_arrow', size=25.0):
+def create_plane_manipulation_arrow(scene, orientation_scale_field, name='plane_translation_arrow', size=25.0, material=None):
     """
     Create an arrow graphics object in the Zinc Scene provided.
 
@@ -199,6 +199,8 @@ def create_plane_manipulation_arrow(scene, orientation_scale_field, name='plane_
     plane_normal_indicator.setName(name)
     plane_normal_indicator.setFieldDomainType(Field.DOMAIN_TYPE_POINT)
     plane_normal_indicator.setVisibilityFlag(False)
+    if material is not None:
+        plane_normal_indicator.setMaterial(material)
 
     fm = scene.getRegion().getFieldmodule()
     zero_field = fm.createFieldConstant([0, 0, 0])
