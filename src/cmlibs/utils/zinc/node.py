@@ -39,14 +39,15 @@ def get_field_values(region, evaluation_field, domain_type=Field.DOMAIN_TYPE_NOD
     return node_values
 
 
-def rotate_nodes(region, rotation_matrix, rotation_point, coordinate_field_name='coordinates'):
+def rotate_nodes(region, rotation_matrix, rotation_point, node_coordinate_field_name='coordinates', datapoint_coordinate_field_name='coordinates'):
     """
     Rotate all nodes in the given region around the rotation point specified.
 
     :param region: The Zinc Region whose nodes are to be rotated.
     :param rotation_matrix: A rotation matrix defining the rotation to be applied to the nodes.
     :param rotation_point: The point that the nodes will be rotated around.
-    :param coordinate_field_name: Optional; The name of the field defining the node coordinates.
+    :param node_coordinate_field_name: Optional; The name of the field defining the node coordinates, default 'coordinates'.
+    :param datapoint_coordinate_field_name: Optional; The name of the field defining the datapoint coordinates, default 'coordinates'.
     """
 
     def _transform_value(value):
@@ -55,17 +56,18 @@ def rotate_nodes(region, rotation_matrix, rotation_point, coordinate_field_name=
     def _transform_parameter(value):
         return matrix_vector_mult(rotation_matrix, value)
 
-    _transform_node_values(region, coordinate_field_name, _transform_value, _transform_parameter)
-    _transform_datapoint_values(region, "marker_data_coordinates", _transform_value)
+    _transform_node_values(region, node_coordinate_field_name, _transform_value, _transform_parameter)
+    _transform_datapoint_values(region, datapoint_coordinate_field_name, _transform_value)
 
 
-def translate_nodes(region, delta, coordinate_field_name='coordinates'):
+def translate_nodes(region, delta, coordinate_field_name='coordinates', datapoint_coordinate_field_name='coordinates'):
     """
     Translate all nodes in the given region by the value specified.
 
     :param region: The Zinc Region whose nodes are to be translated.
     :param delta: A vector specifying the direction and magnitude of the translation.
     :param coordinate_field_name: Optional; The name of the field defining the node coordinates.
+    :param datapoint_coordinate_field_name: Optional; The name of the field defining the datapoint coordinates, default 'coordinates'.
     """
 
     def _transform_value(value):
@@ -75,10 +77,10 @@ def translate_nodes(region, delta, coordinate_field_name='coordinates'):
         return value
 
     _transform_node_values(region, coordinate_field_name, _transform_value, _transform_parameter)
-    _transform_datapoint_values(region, "marker_data_coordinates", _transform_value)
+    _transform_datapoint_values(region, datapoint_coordinate_field_name, _transform_value)
 
 
-def project_nodes(region, plane_point, plane_normal, coordinate_field_name='coordinates'):
+def project_nodes(region, plane_point, plane_normal, coordinate_field_name='coordinates', datapoint_coordinate_field_name='coordinates'):
     """
     Project all nodes in the given region onto the plane specified.
 
@@ -86,6 +88,7 @@ def project_nodes(region, plane_point, plane_normal, coordinate_field_name='coor
     :param plane_point: The point used to define the plane position.
     :param plane_normal: The normal vector defining the orientation of the plane.
     :param coordinate_field_name: Optional; The name of the field defining the node coordinates.
+    :param datapoint_coordinate_field_name: Optional; The name of the field defining the datapoint coordinates, default 'coordinates'.
     """
 
     def _project_point(pt):
@@ -98,7 +101,7 @@ def project_nodes(region, plane_point, plane_normal, coordinate_field_name='coor
         return sub(vec, mult(plane_normal, dist))
 
     _transform_node_values(region, coordinate_field_name, _project_point, _project_vector)
-    _transform_datapoint_values(region, "marker_data_coordinates", _project_point)
+    _transform_datapoint_values(region, datapoint_coordinate_field_name, _project_point)
 
 
 def _transform_datapoint_values(region, coordinate_field_name, _node_values_fcn):
