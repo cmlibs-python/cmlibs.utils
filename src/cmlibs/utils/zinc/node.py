@@ -50,14 +50,11 @@ def rotate_nodes(region, rotation_matrix, rotation_point, node_coordinate_field_
     :param datapoint_coordinate_field_name: Optional; The name of the field defining the datapoint coordinates, default 'coordinates'.
     """
 
-    def _transform_value(value):
-        return add(matrix_vector_mult(rotation_matrix, sub(value, rotation_point)), rotation_point)
+    def _transform_fcn(value, point=True):
+        return add(matrix_vector_mult(rotation_matrix, sub(value, rotation_point)), rotation_point) if point else matrix_vector_mult(rotation_matrix, value)
 
-    def _transform_parameter(value):
-        return matrix_vector_mult(rotation_matrix, value)
-
-    _transform_node_values(region, node_coordinate_field_name, _transform_value, _transform_parameter)
-    _transform_datapoint_values(region, datapoint_coordinate_field_name, _transform_value)
+    _transform_node_values(region, node_coordinate_field_name, _transform_fcn)
+    _transform_datapoint_values(region, datapoint_coordinate_field_name, _transform_fcn)
 
 
 def translate_nodes(region, delta, coordinate_field_name='coordinates', datapoint_coordinate_field_name='coordinates'):
@@ -70,14 +67,11 @@ def translate_nodes(region, delta, coordinate_field_name='coordinates', datapoin
     :param datapoint_coordinate_field_name: Optional; The name of the field defining the datapoint coordinates, default 'coordinates'.
     """
 
-    def _transform_value(value):
-        return add(value, delta)
+    def _transform_fcn(value, point=True):
+        return add(value, delta) if point else value
 
-    def _transform_parameter(value):
-        return value
-
-    _transform_node_values(region, coordinate_field_name, _transform_value, _transform_parameter)
-    _transform_datapoint_values(region, datapoint_coordinate_field_name, _transform_value)
+    _transform_node_values(region, coordinate_field_name, _transform_fcn)
+    _transform_datapoint_values(region, datapoint_coordinate_field_name, _transform_fcn)
 
 
 def project_nodes(region, plane_point, plane_normal, coordinate_field_name='coordinates', datapoint_coordinate_field_name='coordinates'):
@@ -91,28 +85,23 @@ def project_nodes(region, plane_point, plane_normal, coordinate_field_name='coor
     :param datapoint_coordinate_field_name: Optional; The name of the field defining the datapoint coordinates, default 'coordinates'.
     """
 
-    def _project_point(pt):
-        v = sub(pt, plane_point)
-        dist = dot(v, plane_normal)
-        return sub(pt, mult(plane_normal, dist))
-
-    def _project_vector(vec):
-        dist = dot(vec, plane_normal)
+    def _project_fcn(vec, point=True):
+        dist = dot(sub(vec, plane_point) if point else vec, plane_normal)
         return sub(vec, mult(plane_normal, dist))
 
-    _transform_node_values(region, coordinate_field_name, _project_point, _project_vector)
-    _transform_datapoint_values(region, datapoint_coordinate_field_name, _project_point)
+    _transform_node_values(region, coordinate_field_name, _project_fcn)
+    _transform_datapoint_values(region, datapoint_coordinate_field_name, _project_fcn)
 
 
 def _transform_datapoint_values(region, coordinate_field_name, _node_values_fcn):
-    _transform_domain_values(region, coordinate_field_name, _node_values_fcn, None, Field.DOMAIN_TYPE_DATAPOINTS)
+    _transform_domain_values(region, coordinate_field_name, _node_values_fcn, Field.DOMAIN_TYPE_DATAPOINTS)
 
 
-def _transform_node_values(region, coordinate_field_name, _node_values_fcn, _node_parameters_fcn):
-    _transform_domain_values(region, coordinate_field_name, _node_values_fcn, _node_parameters_fcn, Field.DOMAIN_TYPE_NODES)
+def _transform_node_values(region, coordinate_field_name, _transform_fcn):
+    _transform_domain_values(region, coordinate_field_name, _transform_fcn, Field.DOMAIN_TYPE_NODES)
 
 
-def _transform_domain_values(region, coordinate_field_name, _node_values_fcn, _node_parameters_fcn, domain):
+def _transform_domain_values(region, coordinate_field_name, _transform_fcn, domain):
     fm = region.getFieldmodule()
     fc = fm.createFieldcache()
     node_derivatives = [Node.VALUE_LABEL_D_DS1, Node.VALUE_LABEL_D_DS2, Node.VALUE_LABEL_D_DS3,
@@ -133,14 +122,14 @@ def _transform_domain_values(region, coordinate_field_name, _node_values_fcn, _n
             fc.setNode(node)
             result, x = coordinates.evaluateReal(fc, components_count)
             if result == RESULT_OK:
-                proj_x = _node_values_fcn(x)
+                proj_x = _transform_fcn(x)
                 coordinates.assignReal(fc, proj_x)
                 node_template.defineFieldFromNode(coordinates, node)
                 for d in range(derivatives_count):
                     version_count = node_template.getValueNumberOfVersions(coordinates, -1, node_derivatives[d])
                     for version in range(1, version_count + 1):
                         result, values = coordinates.getNodeParameters(fc, -1, node_derivatives[d], version, components_count)
-                        proj_param = _node_parameters_fcn(values)
+                        proj_param = _transform_fcn(values, point=False)
                         coordinates.setNodeParameters(fc, -1, node_derivatives[d], version, proj_param)
 
             node = node_iter.next()
