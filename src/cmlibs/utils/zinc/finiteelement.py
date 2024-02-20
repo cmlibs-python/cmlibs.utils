@@ -281,34 +281,34 @@ def transform_coordinates(field: Field, rotation_scale, offset, time=0.0) -> boo
         return False
     success = True
     fm = field.getFieldmodule()
-    fm.beginChange()
-    cache = fm.createFieldcache()
-    cache.setTime(time)
-    nodes = fm.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
-    node_template = nodes.createNodetemplate()
-    node_iter = nodes.createNodeiterator()
-    node = node_iter.next()
-    while node.isValid():
-        node_template.defineFieldFromNode(fe_field, node)
-        cache.setNode(node)
-        for derivative in [Node.VALUE_LABEL_VALUE, Node.VALUE_LABEL_D_DS1, Node.VALUE_LABEL_D_DS2,
-                           Node.VALUE_LABEL_D2_DS1DS2,
-                           Node.VALUE_LABEL_D_DS3, Node.VALUE_LABEL_D2_DS1DS3, Node.VALUE_LABEL_D2_DS2DS3,
-                           Node.VALUE_LABEL_D3_DS1DS2DS3]:
-            versions = node_template.getValueNumberOfVersions(fe_field, -1, derivative)
-            for v in range(versions):
-                result, values = fe_field.getNodeParameters(cache, -1, derivative, v + 1, ncomp)
-                if result != RESULT_OK:
-                    success = False
-                else:
-                    new_values = vectorops.matrix_vector_mult(rotation_scale, values)
-                    if derivative == Node.VALUE_LABEL_VALUE:
-                        new_values = vectorops.add(new_values, offset)
-                    result = fe_field.setNodeParameters(cache, -1, derivative, v + 1, new_values)
+    with ChangeManager(fm):
+        cache = fm.createFieldcache()
+        cache.setTime(time)
+        nodes = fm.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+        node_template = nodes.createNodetemplate()
+        node_iter = nodes.createNodeiterator()
+        node = node_iter.next()
+        while node.isValid():
+            node_template.defineFieldFromNode(fe_field, node)
+            cache.setNode(node)
+            for derivative in [Node.VALUE_LABEL_VALUE, Node.VALUE_LABEL_D_DS1, Node.VALUE_LABEL_D_DS2,
+                               Node.VALUE_LABEL_D2_DS1DS2,
+                               Node.VALUE_LABEL_D_DS3, Node.VALUE_LABEL_D2_DS1DS3, Node.VALUE_LABEL_D2_DS2DS3,
+                               Node.VALUE_LABEL_D3_DS1DS2DS3]:
+                versions = node_template.getValueNumberOfVersions(fe_field, -1, derivative)
+                for v in range(versions):
+                    result, values = fe_field.getNodeParameters(cache, -1, derivative, v + 1, ncomp)
                     if result != RESULT_OK:
                         success = False
-        node = node_iter.next()
-    fm.endChange()
+                    else:
+                        new_values = vectorops.matrix_vector_mult(rotation_scale, values)
+                        if derivative == Node.VALUE_LABEL_VALUE:
+                            new_values = vectorops.add(new_values, offset)
+                        result = fe_field.setNodeParameters(cache, -1, derivative, v + 1, new_values)
+                        if result != RESULT_OK:
+                            success = False
+            node = node_iter.next()
+
     if not success:
         print('transform_coordinates: failed to get/set some values')
     return success
@@ -459,6 +459,40 @@ def get_identifiers(nodeset: Nodeset) -> list:
         node = node_iterator.next()
 
     return identifiers
+
+
+def is_field_defined_for_nodeset(field, nodeset=None, nodeset_domain=None):
+    """
+    Determine if the given field is defined for any member of the given nodeset,
+    return True if the field is defined on at least one member and False otherwise.
+    If neither nodeset nor nodeset_domain is specified then False is returned.
+    If nodeset is given and nodeset_domain is also passed then the nodeset_domain will be
+    ignored.
+
+    :param field: Field to use for determining if defined any member in the given nodeset.
+    :param nodeset: Nodeset to determine if field is defined on any member.
+    :param nodeset_domain: Nodeset domain to determine if field is defined on any member.
+
+    :return: True if the field is defined on at least one member, False otherwise.
+    """
+    if nodeset is None and nodeset_domain is None:
+        return False
+
+    source_nodeset = nodeset
+    field_module = field.getFieldmodule()
+    if nodeset_domain is not None and nodeset is None:
+        source_nodeset = field_module.findNodesetByFieldDomainType(nodeset_domain)
+
+    field_cache = field_module.createFieldcache()
+    node_iter = source_nodeset.createNodeiterator()
+    node = node_iter.next()
+    while node.isValid():
+        field_cache.setNode(node)
+        if field.isDefinedAtLocation(field_cache):
+            return True
+        node = node_iter.next()
+
+    return False
 
 
 createCubeElement = create_cube_element
