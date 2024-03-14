@@ -199,7 +199,7 @@ def get_node_name_centres(nodeset: Nodeset, coordinates_field: Field, name_field
                     name_centre[c] += coordinates[c]
                 name_record[1] += 1
             else:
-                name_records[name] = [ coordinates, 1 ]
+                name_records[name] = [coordinates, 1]
         node = nodeiter.next()
     # divide centre coordinates by count
     name_centres = {}
@@ -208,7 +208,7 @@ def get_node_name_centres(nodeset: Nodeset, coordinates_field: Field, name_field
         name_count = name_record[1]
         name_centre = name_record[0]
         if name_count > 1:
-            scale = 1.0/name_count
+            scale = 1.0 / name_count
             for c in range(components_count):
                 name_centre[c] *= scale
         name_centres[name] = name_centre
@@ -493,6 +493,24 @@ def is_field_defined_for_nodeset(field, nodeset=None, nodeset_domain=None):
         node = node_iter.next()
 
     return False
+
+
+def interpolate_cubic_hermite_derivative(v1, d1, v2, d2, xi):
+    """
+    Get derivatives of cubic Hermite interpolated from v1, d1 to v2, d2.
+    :param v1: and
+    :param v2: Values at xi = 0.0 and xi = 1.0, respectively.
+    :param d1: and
+    :param d2: Derivatives w.r.t. xi at xi = 0.0 and xi = 1.0, respectively.
+    :param xi: Position in curve, nominally in [0.0, 1.0].
+    :return: List of interpolated derivatives at xi.
+    """
+    xi2 = xi * xi
+    f1 = -6.0 * xi + 6.0 * xi2
+    f2 = 1.0 - 4.0 * xi + 3.0 * xi2
+    f3 = 6.0 * xi - 6.0 * xi2
+    f4 = -2.0 * xi + 3.0 * xi2
+    return [(f1 * v1[i] + f2 * d1[i] + f3 * v2[i] + f4 * d2[i]) for i in range(len(v1))]
 
 
 createCubeElement = create_cube_element
