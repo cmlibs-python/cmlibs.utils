@@ -32,7 +32,7 @@ readme.append('')
 software_licence = readfile("LICENSE")
 
 requires = [
-    'cmlibs.maths >= 0.3',
+    'cmlibs.maths >= 0.5',
     'cmlibs.zinc >= 4.0'
 ]
 
