@@ -98,21 +98,24 @@ def determine_appropriate_glyph_size(region, coordinates):
             del sum_line_length
             del one
         if (line_count == 0) or (glyph_width == 0.0):
-            # fallback if no lines: use graphics range
-            min_x, max_x = evaluate_field_nodeset_range(coordinates, nodes)
-            # use function of coordinate range if no elements
-            if components_count == 1:
-                max_scale = max_x - min_x
-            else:
-                first = True
-                for c in range(components_count):
-                    scale = max_x[c] - min_x[c]
-                    if first or (scale > max_scale):
-                        max_scale = scale
-                        first = False
-            if max_scale == 0.0:
-                max_scale = 1.0
-            glyph_width = 0.01 * max_scale
+            # Default glyph width if no other information.
+            glyph_width = 0.01
+            if nodes.getSize() > 0:
+                # fallback if no lines: use graphics range
+                min_x, max_x = evaluate_field_nodeset_range(coordinates, nodes)
+                # use function of coordinate range if no elements
+                if components_count == 1:
+                    max_scale = max_x - min_x
+                else:
+                    first = True
+                    for c in range(components_count):
+                        scale = max_x[c] - min_x[c]
+                        if first or (scale > max_scale):
+                            max_scale = scale
+                            first = False
+                if max_scale == 0.0:
+                    max_scale = 1.0
+                glyph_width = 0.01 * max_scale
         del fieldcache
 
     return glyph_width

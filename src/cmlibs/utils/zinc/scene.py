@@ -109,7 +109,7 @@ def scene_clear_selection_group(scene: Scene):
 
 
 def scene_create_node_derivative_graphics(scene, coordinates, node_derivative_fields, glyph_width, node_derivative_labels=None,
-                                          display_node_derivatives=0, display_node_derivative_labels=None, domain=Field.DOMAIN_TYPE_NODES):
+                                          display_node_derivatives=0, display_node_derivative_labels=None, display_version=0, domain=Field.DOMAIN_TYPE_NODES):
     """
     display_node_derivatives  # tri-state: 0=show none, 1=show selected, 2=show all
     display_node_derivative_labels # A list of derivative labels to display, 'D1', 'D2', etc.
@@ -148,10 +148,11 @@ def scene_create_node_derivative_graphics(scene, coordinates, node_derivative_fi
                 material = mm.findMaterialByName(node_derivative_material_names[i % length_node_derivative_material_names])
                 node_derivatives.setMaterial(material)
                 node_derivatives.setSelectedMaterial(material)
-                node_derivatives.setName('displayNodeDerivatives' + node_derivative_label)
+                node_derivatives.setName(f'displayNodeDerivatives_{node_derivative_label}_v{v + 1}')
 
                 node_derivatives.setSelectMode(Graphics.SELECT_MODE_DRAW_SELECTED if (display_node_derivatives == 1) else Graphics.SELECT_MODE_ON)
-                node_derivatives.setVisibilityFlag(bool(display_node_derivatives) and node_derivative_label in display_node_derivative_labels)
+                version_visibility = (display_version == 0) or (display_version == (v + 1))
+                node_derivatives.setVisibilityFlag(bool(display_node_derivatives) and (node_derivative_label in display_node_derivative_labels) and version_visibility)
 
     return node_derivative_graphics
 
