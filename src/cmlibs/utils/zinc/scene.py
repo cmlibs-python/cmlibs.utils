@@ -128,6 +128,7 @@ def scene_create_node_derivative_graphics(scene, coordinates, node_derivative_fi
         display_node_derivative_labels = ['D1', 'D2', 'D3', 'D12', 'D13', 'D23', 'D123']
 
     node_derivative_graphics = []
+    print('create node derivative graphics')
     with ChangeManager(scene):
         for i, node_derivative_label in enumerate(node_derivative_labels):
             max_versions = len(node_derivative_fields[i])
@@ -152,7 +153,15 @@ def scene_create_node_derivative_graphics(scene, coordinates, node_derivative_fi
 
                 node_derivatives.setSelectMode(Graphics.SELECT_MODE_DRAW_SELECTED if (display_node_derivatives == 1) else Graphics.SELECT_MODE_ON)
                 version_visibility = (display_version == 0) or (display_version == (v + 1))
+                print(f'displayNodeDerivatives_{node_derivative_label}_v{v + 1}')
+                print(display_node_derivatives, bool(display_node_derivatives))
+                print(node_derivative_label in display_node_derivative_labels)
+                print(display_version == 0, display_version == (v + 1))
+                print(version_visibility)
+                print(bool(display_node_derivatives), node_derivative_label in display_node_derivative_labels, version_visibility)
+                print(node_derivative_label, display_node_derivative_labels)
                 node_derivatives.setVisibilityFlag(bool(display_node_derivatives) and (node_derivative_label in display_node_derivative_labels) and version_visibility)
+    print('end')
 
     return node_derivative_graphics
 
