@@ -8,7 +8,11 @@ from cmlibs.zinc.context import Context
 from cmlibs.zinc.field import Field
 from cmlibs.zinc.result import RESULT_OK
 
-here = os.path.abspath(os.path.dirname(__file__))
+_here = os.path.abspath(os.path.dirname(__file__))
+
+
+def get_test_resource_name(name):
+    return os.path.join(_here, 'resources', name)
 
 
 def assert_almost_equal_list(testcase, actual_list, expected_list, delta):

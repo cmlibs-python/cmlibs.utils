@@ -4,8 +4,12 @@ Utilities for creating and working with Zinc Groups and selection.
 
 from enum import Enum
 
+from cmlibs.utils.zinc.finiteelement import evaluate_mesh_centroid, evaluate_nearest_mesh_location, \
+    evaluate_field_nodeset_mean
 from cmlibs.utils.zinc.general import ChangeManager, HierarchicalChangeManager
+from cmlibs.zinc.element import Element
 from cmlibs.zinc.field import Field, FieldGroup
+from cmlibs.zinc.result import RESULT_OK
 
 
 class GroupOperator(Enum):
@@ -158,20 +162,35 @@ def group_add_group_nodes(group: FieldGroup, other_group: FieldGroup, field_doma
             nodeset_group.addNodesConditional(other_group)
 
 
-def group_get_highest_dimension(group: FieldGroup):
+def group_get_highest_dimension_mesh_nodeset_group(group: FieldGroup):
     """
-    Get highest dimension of elements or nodes in Zinc group.
-    :return: Dimensions from 3-0, or -1 if empty.
+    Get highest dimension non-empty mesh group, if not non-empty nodeset
+    group in Zinc group.
+    :return: MeshGroup, NodesetGroup, only the highest dimension of which
+    will be not None; or None, None if group is empty.
     """
     fieldmodule = group.getFieldmodule()
     for dimension in range(3, 0, -1):
         mesh = fieldmodule.findMeshByDimension(dimension)
         mesh_group = group.getMeshGroup(mesh)
         if mesh_group.isValid() and (mesh_group.getSize() > 0):
-            return dimension
+            return mesh_group, None
     nodeset = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
     nodeset_group = group.getNodesetGroup(nodeset)
     if nodeset_group.isValid() and (nodeset_group.getSize() > 0):
+        return None, nodeset_group
+    return None, None
+
+
+def group_get_highest_dimension(group: FieldGroup):
+    """
+    Get highest dimension of elements or nodes in Zinc group.
+    :return: Dimensions from 3-0, or -1 if empty.
+    """
+    mesh_group, nodeset_group = group_get_highest_dimension_mesh_nodeset_group(group)
+    if mesh_group:
+        return mesh_group.getDimension()
+    elif nodeset_group:
         return 0
     return -1
 
@@ -320,3 +339,52 @@ def nodeset_group_to_identifier_ranges(nodeset_group):
     :return: Ordered list of node identifier ranges e.g. [[1,30],[55,55],[66,70]]
     """
     return domain_iterator_to_identifier_ranges(nodeset_group.createNodeiterator())
+
+
+def group_evaluate_centroid(group, coordinate_field, number_of_integration_points=4):
+    """
+    Get the mean/centroid of field over group.
+    Integrates over highest dimension mesh in group, otherwise gets mean over nodes, if defined.
+    :param group: Zinc group to query.
+    :param coordinate_field: Field to evaluate mean/centroid of. Must be real-valued with number of components
+    equal or greater than highest mesh dimension, up to a maximum of 3.
+    :param number_of_integration_points: Number of integration points in each element direction, if dimension > 0.
+    :return: Mean/centroid field values, or None if empty group or field not defined.
+    """
+    mesh_group, nodeset_group = group_get_highest_dimension_mesh_nodeset_group(group)
+    if mesh_group:
+        return evaluate_mesh_centroid(coordinate_field, mesh_group, number_of_integration_points)
+    elif nodeset_group:
+        return evaluate_field_nodeset_mean(coordinate_field, node)
+    return None
+
+
+def group_evaluate_representative_point(group, coordinate_field,
+                                        is_exterior=False, is_on_face=Element.FACE_TYPE_INVALID):
+    """
+    Get a single point representing the centre of coordinates over group.
+    Initially start with the centroid.
+    If on a mesh group, find the nearest mesh location and return coordinates there.
+    If the group is 3-D, optionally restrict nearest search to the exterior and/or specified face type.
+    :param is_exterior: 3-D only: optional flag: if True restrict search to faces of mesh on exterior of model.
+    :param is_on_face: 3-D only: Optional element face type to restrict search to faces of mesh with face type.
+    :return: Representative point coordinates, or None if empty group or field not defined.
+    """
+    mesh_group, nodeset_group = group_get_highest_dimension_mesh_nodeset_group(group)
+    if mesh_group:
+        is_3d = mesh_group.getDimension() == 3
+        centroid = evaluate_mesh_centroid(coordinate_field, mesh_group)
+        element, xi = evaluate_nearest_mesh_location(
+            centroid, coordinate_field, mesh_group,
+            is_exterior and is_3d,
+            is_on_face if is_3d else Element.FACE_TYPE_INVALID)
+        if element:
+            fieldmodule = group.getFieldmodule()
+            fieldcache = fieldmodule.createFieldcache()
+            fieldcache.setMeshLocation(element, xi)
+            result, coordinates = coordinate_field.evaluateReal(fieldcache, coordinate_field.getNumberOfComponents())
+            if result == RESULT_OK:
+                return coordinates
+    elif nodeset_group:
+        return evaluate_field_nodeset_mean(field, node)
+    return None

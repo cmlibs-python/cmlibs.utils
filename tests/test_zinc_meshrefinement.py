@@ -1,24 +1,18 @@
 import os
 import unittest
 
+from cmlibs.utils.zinc.meshrefinement import MeshRefinement
 from cmlibs.zinc.context import Context
 from cmlibs.zinc.element import Element, Elementbasis
 from cmlibs.zinc.field import Field
 from cmlibs.zinc.result import RESULT_OK
-
-from cmlibs.utils.zinc.meshrefinement import MeshRefinement
-
-here = os.path.abspath(os.path.dirname(__file__))
-
-
-def _resource(name):
-    return os.path.join(here, 'resources', name)
+from test_zinc import get_test_resource_name
 
 
 class ZincMeshRefinementTestCase(unittest.TestCase):
 
     def test_mesh_refinement_linear_lagrange(self):
-        exf_file = _resource('warped_two_element_cube.exf')
+        exf_file = get_test_resource_name('warped_two_element_cube.exf')
 
         context = Context("test")
         source_region = context.createRegion()
@@ -38,7 +32,7 @@ class ZincMeshRefinementTestCase(unittest.TestCase):
         self.assertEqual(48, mesh.getSize())
 
     def test_mesh_refinement_cubic_lagrange(self):
-        exf_file = _resource('warped_two_element_cube.exf')
+        exf_file = get_test_resource_name('warped_two_element_cube.exf')
 
         context = Context("test")
         source_region = context.createRegion()
@@ -58,7 +52,7 @@ class ZincMeshRefinementTestCase(unittest.TestCase):
         self.assertEqual(48, mesh.getSize())
 
     # def test_mesh_refinement_cubic_hermite(self):
-    #     exf_file = _resource('warped_two_element_cube.exf')
+    #     exf_file = get_test_resource_name('warped_two_element_cube.exf')
     #
     #     context = Context("test")
     #     source_region = context.createRegion()
@@ -74,12 +68,12 @@ class ZincMeshRefinementTestCase(unittest.TestCase):
     #     nodes = fm.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
     #     mesh = fm.findMeshByDimension(3)
     #
-    #     target_region.writeFile(_resources('refined_mesh.exf'))
+    #     target_region.writeFile(get_test_resource_names('refined_mesh.exf'))
     #     self.assertEqual(54, nodes.getSize())
     #     self.assertEqual(48, mesh.getSize())
 
     def test_mesh_refinement_quadratic_lagrange(self):
-        exf_file = _resource('two_element_cube.exf')
+        exf_file = get_test_resource_name('two_element_cube.exf')
 
         context = Context("test")
         source_region = context.createRegion()
