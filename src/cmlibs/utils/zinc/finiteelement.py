@@ -279,8 +279,8 @@ def evaluate_field_mesh_integral(field: Field, coordinate_field: Field, mesh: Me
 def evaluate_nearest_mesh_location(start_coordinates, coordinate_field: Field, mesh: Mesh,
                                    is_exterior=False, is_on_face=Element.FACE_TYPE_INVALID):
     """
-    Evaluate mesh location where coordinate field is nearest to start coordinates,
-    optionally restricted to exterior and/or specified face type.
+    Evaluate mesh location where coordinate field is nearest to start coordinates.
+    If the model has elements of dimension greater than 1, optionally restrict to exterior and/or specified face type.
     :param start_coordinates: Start coordinates as float (1-D) or list of float (n-D).
     :param coordinate_field: Field giving spatial coordinates over mesh. Must be real-valued
     with number of components equal or greater than mesh dimension, up to a maximum of 3.
@@ -290,12 +290,16 @@ def evaluate_nearest_mesh_location(start_coordinates, coordinate_field: Field, m
     :return: Nearest Element, xi or None, None if undefined.
     """
     fieldmodule = mesh.getFieldmodule()
+    highest_dimension_mesh = get_highest_dimension_mesh(fieldmodule)
+    if not highest_dimension_mesh:
+        return None, None
+    highest_mesh_dimension = highest_dimension_mesh.getDimension()
     mesh_dimension = mesh.getDimension()
     with ChangeManager(fieldmodule):
         find_mesh_location = fieldmodule.createFieldFindMeshLocation(
             fieldmodule.createFieldConstant(start_coordinates), coordinate_field, mesh)
         find_mesh_location.setSearchMode(FieldFindMeshLocation.SEARCH_MODE_NEAREST)
-        if (mesh_dimension > 1) and (is_exterior or (is_on_face != Element.FACE_TYPE_INVALID)):
+        if (highest_mesh_dimension > 1) and (is_exterior or (is_on_face != Element.FACE_TYPE_INVALID)):
             is_exterior_condition = fieldmodule.createFieldIsExterior() if is_exterior else None
             is_on_face_condition = fieldmodule.createFieldIsOnFace(is_on_face) \
                 if (is_on_face != Element.FACE_TYPE_INVALID) else None
@@ -311,7 +315,8 @@ def evaluate_nearest_mesh_location(start_coordinates, coordinate_field: Field, m
                 condition = fieldmodule.createFieldAnd(mesh_group.getFieldGroup(), condition)
             del mesh_group
             search_group = fieldmodule.createFieldGroup()
-            search_mesh = search_group.createMeshGroup(fieldmodule.findMeshByDimension(mesh_dimension - 1))
+            search_mesh_dimension = min(mesh_dimension, highest_mesh_dimension - 1)
+            search_mesh = search_group.createMeshGroup(fieldmodule.findMeshByDimension(search_mesh_dimension))
             search_mesh.addElementsConditional(condition)
             size = search_mesh.getSize()
             element = search_mesh.createElementiterator().next()

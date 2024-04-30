@@ -355,7 +355,7 @@ def group_evaluate_centroid(group, coordinate_field, number_of_integration_point
     if mesh_group:
         return evaluate_mesh_centroid(coordinate_field, mesh_group, number_of_integration_points)
     elif nodeset_group:
-        return evaluate_field_nodeset_mean(coordinate_field, node)
+        return evaluate_field_nodeset_mean(coordinate_field, nodeset_group)
     return None
 
 
@@ -365,26 +365,26 @@ def group_evaluate_representative_point(group, coordinate_field,
     Get a single point representing the centre of coordinates over group.
     Initially start with the centroid.
     If on a mesh group, find the nearest mesh location and return coordinates there.
-    If the group is 3-D, optionally restrict nearest search to the exterior and/or specified face type.
+    If the region has 3-D elements, optionally restrict nearest search to the exterior and/or specified face type.
     :param is_exterior: 3-D only: optional flag: if True restrict search to faces of mesh on exterior of model.
     :param is_on_face: 3-D only: Optional element face type to restrict search to faces of mesh with face type.
     :return: Representative point coordinates, or None if empty group or field not defined.
     """
     mesh_group, nodeset_group = group_get_highest_dimension_mesh_nodeset_group(group)
     if mesh_group:
-        is_3d = mesh_group.getDimension() == 3
+        fieldmodule = group.getFieldmodule()
+        is_3d = fieldmodule.findMeshByDimension(3).getSize() > 0
         centroid = evaluate_mesh_centroid(coordinate_field, mesh_group)
         element, xi = evaluate_nearest_mesh_location(
             centroid, coordinate_field, mesh_group,
             is_exterior and is_3d,
             is_on_face if is_3d else Element.FACE_TYPE_INVALID)
         if element:
-            fieldmodule = group.getFieldmodule()
             fieldcache = fieldmodule.createFieldcache()
             fieldcache.setMeshLocation(element, xi)
             result, coordinates = coordinate_field.evaluateReal(fieldcache, coordinate_field.getNumberOfComponents())
             if result == RESULT_OK:
                 return coordinates
     elif nodeset_group:
-        return evaluate_field_nodeset_mean(field, node)
+        return evaluate_field_nodeset_mean(coordinate_field, nodeset_group)
     return None

@@ -6,7 +6,7 @@ from cmlibs.zinc.context import Context
 from cmlibs.zinc.element import Element, Elementbasis
 from cmlibs.zinc.field import Field
 from cmlibs.zinc.result import RESULT_OK
-from test_zinc import get_test_resource_name
+from utilities import get_test_resource_name
 
 
 class ZincMeshRefinementTestCase(unittest.TestCase):
