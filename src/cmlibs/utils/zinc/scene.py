@@ -141,7 +141,6 @@ def scene_create_node_derivative_graphics(scene, coordinates, node_derivative_fi
                 point_attr.setOrientationScaleField(node_derivative_fields[i][v])
                 point_attr.setBaseSize([0.0, glyph_width, glyph_width])
                 point_attr.setScaleFactors([derivativeScales[i], 0.0, 0.0])
-                # point_attr.setLabelText(1, f"node_label_{node_derivative_label}")
                 if max_versions > 1:
                     point_attr.setLabelOffset([1.05, 0.0, 0.0])
                     point_attr.setLabelText(1, str(v + 1))
