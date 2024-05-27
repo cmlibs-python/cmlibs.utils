@@ -1,4 +1,3 @@
-import os
 import unittest
 from cmlibs.utils.zinc.field import createFieldMeshIntegral, findOrCreateFieldCoordinates, \
     findOrCreateFieldGroup
@@ -7,14 +6,7 @@ from cmlibs.utils.zinc.finiteelement import createCubeElement, createSquareEleme
 from cmlibs.zinc.context import Context
 from cmlibs.zinc.field import Field
 from cmlibs.zinc.result import RESULT_OK
-
-here = os.path.abspath(os.path.dirname(__file__))
-
-
-def assert_almost_equal_list(testcase, actual_list, expected_list, delta):
-    assert len(actual_list) == len(expected_list)
-    for actual, expected in zip(actual_list, expected_list):
-        testcase.assertAlmostEqual(actual, expected, delta=delta)
+from utilities import assert_almost_equal_list
 
 
 class ZincUtilsTestCase(unittest.TestCase):
