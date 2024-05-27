@@ -4,7 +4,7 @@ Utilities for creating and working with Zinc Finite Elements.
 from cmlibs.maths import vectorops
 from cmlibs.utils.zinc.general import ChangeManager
 from cmlibs.zinc.element import Element, Elementbasis, Elementfieldtemplate, Mesh
-from cmlibs.zinc.field import Field
+from cmlibs.zinc.field import Field, FieldFindMeshLocation
 from cmlibs.zinc.fieldmodule import Fieldmodule
 from cmlibs.zinc.node import Node, Nodeset
 from cmlibs.zinc.result import RESULT_OK
@@ -217,7 +217,7 @@ def get_node_name_centres(nodeset: Nodeset, coordinates_field: Field, name_field
 
 def evaluate_field_nodeset_range(field: Field, nodeset: Nodeset):
     """
-    :return: min, max range of field over nodes.
+    :return: min, max range of field over nodes, or None, None if invalid.
     """
     fieldmodule = nodeset.getFieldmodule()
     components_count = field.getNumberOfComponents()
@@ -225,30 +225,133 @@ def evaluate_field_nodeset_range(field: Field, nodeset: Nodeset):
         min_field = fieldmodule.createFieldNodesetMinimum(field, nodeset)
         max_field = fieldmodule.createFieldNodesetMaximum(field, nodeset)
         fieldcache = fieldmodule.createFieldcache()
-        result, min_values = min_field.evaluateReal(fieldcache, components_count)
-        assert result == RESULT_OK
-        result, max_values = max_field.evaluateReal(fieldcache, components_count)
-        assert result == RESULT_OK
+        min_result, min_values = min_field.evaluateReal(fieldcache, components_count)
+        max_result, max_values = max_field.evaluateReal(fieldcache, components_count)
         del min_field
         del max_field
         del fieldcache
+    if (min_result != RESULT_OK) or (max_result != RESULT_OK):
+        return None, None
     return min_values, max_values
 
 
 def evaluate_field_nodeset_mean(field: Field, nodeset: Nodeset):
     """
-    :return: Mean of field over nodeset.
+    :return: Mean of field over nodeset, or None if invalid.
     """
     fieldmodule = nodeset.getFieldmodule()
     components_count = field.getNumberOfComponents()
     with ChangeManager(fieldmodule):
         mean_field = fieldmodule.createFieldNodesetMean(field, nodeset)
         fieldcache = fieldmodule.createFieldcache()
-        result, mean_values = mean_field.evaluateReal(fieldcache, components_count)
-        assert result == RESULT_OK
+        result, value = mean_field.evaluateReal(fieldcache, components_count)
         del mean_field
         del fieldcache
-    return mean_values
+    if result != RESULT_OK:
+        return None
+    return value
+
+
+def evaluate_field_mesh_integral(field: Field, coordinate_field: Field, mesh: Mesh, number_of_integration_points=4):
+    """
+    Integrate value of a field over mesh using Gaussian Quadrature.
+    :param field: Field to integrate over mesh. Must be real valued.
+    :param coordinate_field: Field giving spatial coordinates to integrate over. Must be real-valued
+    with number of components equal or greater than mesh dimension, up to a maximum of 3.
+    :param mesh: The mesh or mesh group to integrate over.
+    :param number_of_integration_points: Number of integration points in each element direction.
+    :return: Integral value, or None if undefined.
+    """
+    fieldmodule = mesh.getFieldmodule()
+    components_count = field.getNumberOfComponents()
+    with ChangeManager(fieldmodule):
+        integral = fieldmodule.createFieldMeshIntegral(field, coordinate_field, mesh)
+        integral.setNumbersOfPoints(number_of_integration_points)
+        fieldcache = fieldmodule.createFieldcache()
+        result, value = integral.evaluateReal(fieldcache, components_count)
+        del integral
+        del fieldcache
+    if result != RESULT_OK:
+        return None
+    return value
+
+
+def evaluate_nearest_mesh_location(start_coordinates, coordinate_field: Field, mesh: Mesh,
+                                   is_exterior=False, is_on_face=Element.FACE_TYPE_INVALID):
+    """
+    Evaluate mesh location where coordinate field is nearest to start coordinates.
+    If the model has elements of dimension greater than 1, optionally restrict to exterior and/or specified face type.
+    :param start_coordinates: Start coordinates as float (1-D) or list of float (n-D).
+    :param coordinate_field: Field giving spatial coordinates over mesh. Must be real-valued
+    with number of components equal or greater than mesh dimension, up to a maximum of 3.
+    :param mesh: The mesh or mesh group to search.
+    :param is_exterior: Optional flag: if True restrict search to faces of mesh on exterior of model.
+    :param is_on_face: Optional element face type, to restrict search to faces of mesh with specified face type.
+    :return: Nearest Element, xi or None, None if undefined.
+    """
+    fieldmodule = mesh.getFieldmodule()
+    highest_dimension_mesh = get_highest_dimension_mesh(fieldmodule)
+    if not highest_dimension_mesh:
+        return None, None
+    highest_mesh_dimension = highest_dimension_mesh.getDimension()
+    mesh_dimension = mesh.getDimension()
+    with ChangeManager(fieldmodule):
+        find_mesh_location = fieldmodule.createFieldFindMeshLocation(
+            fieldmodule.createFieldConstant(start_coordinates), coordinate_field, mesh)
+        find_mesh_location.setSearchMode(FieldFindMeshLocation.SEARCH_MODE_NEAREST)
+        if (highest_mesh_dimension > 1) and (is_exterior or (is_on_face != Element.FACE_TYPE_INVALID)):
+            is_exterior_condition = fieldmodule.createFieldIsExterior() if is_exterior else None
+            is_on_face_condition = fieldmodule.createFieldIsOnFace(is_on_face) \
+                if (is_on_face != Element.FACE_TYPE_INVALID) else None
+            condition = (
+                fieldmodule.createFieldAnd(is_exterior_condition, is_on_face_condition)
+                    if (is_exterior and is_on_face_condition) else
+                is_exterior_condition if is_exterior else
+                is_on_face_condition)
+            del is_exterior_condition
+            del is_on_face_condition
+            mesh_group = mesh.castGroup()
+            if mesh_group.isValid():
+                condition = fieldmodule.createFieldAnd(mesh_group.getFieldGroup(), condition)
+            del mesh_group
+            search_group = fieldmodule.createFieldGroup()
+            search_mesh_dimension = min(mesh_dimension, highest_mesh_dimension - 1)
+            search_mesh = search_group.createMeshGroup(fieldmodule.findMeshByDimension(search_mesh_dimension))
+            search_mesh.addElementsConditional(condition)
+            size = search_mesh.getSize()
+            element = search_mesh.createElementiterator().next()
+            id = element.getIdentifier()
+            del condition
+            find_mesh_location.setSearchMesh(search_mesh)
+            del search_mesh
+        fieldcache = fieldmodule.createFieldcache()
+        mesh_location = find_mesh_location.evaluateMeshLocation(fieldcache, mesh_dimension)
+        if not mesh_location[0].isValid():
+            mesh_location = None, None
+        del find_mesh_location
+    return mesh_location
+
+
+def evaluate_mesh_centroid(coordinates: Field, mesh: Mesh, number_of_integration_points=4):
+    """
+    Get the centroid of the coordinate field over mesh.
+    :param coordinates: Field giving spatial coordinates to integrate over. Must be real-valued
+    with number of components equal or greater than mesh dimension, up to a maximum of 3.
+    :param mesh: The mesh or mesh group to integrate over.
+    :param number_of_integration_points: Number of integration points in each element direction.
+    :return: Centroid coordinates, or None if empty group or field not defined.
+    """
+    fieldmodule = coordinates.getFieldmodule()
+    with ChangeManager(fieldmodule):
+        coordinate_integral = evaluate_field_mesh_integral(coordinates, coordinates, mesh)
+        if coordinate_integral is None:
+            return None
+        one = fieldmodule.createFieldConstant(1.0)
+        mass = evaluate_field_mesh_integral(one, coordinates, mesh)
+        del one
+        if isinstance(coordinate_integral, float):
+            return coordinate_integral / mass
+        return vectorops.div(coordinate_integral, mass)
 
 
 def transform_coordinates(field: Field, rotation_scale, offset, time=0.0) -> bool:
