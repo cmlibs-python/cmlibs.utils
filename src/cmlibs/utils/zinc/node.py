@@ -124,11 +124,13 @@ def _transform_domain_values(region, coordinate_field_name, _transform_fcn, doma
             if result == RESULT_OK:
                 proj_x = _transform_fcn(x)
                 coordinates.assignReal(fc, proj_x)
-                node_template.defineFieldFromNode(coordinates, node)
-                for d in range(derivatives_count):
-                    version_count = node_template.getValueNumberOfVersions(coordinates, -1, node_derivatives[d])
-                    for version in range(1, version_count + 1):
-                        result, values = coordinates.getNodeParameters(fc, -1, node_derivatives[d], version, components_count)
+
+            node_template.defineFieldFromNode(coordinates, node)
+            for d in range(derivatives_count):
+                version_count = node_template.getValueNumberOfVersions(coordinates, -1, node_derivatives[d])
+                for version in range(1, version_count + 1):
+                    result, values = coordinates.getNodeParameters(fc, -1, node_derivatives[d], version, components_count)
+                    if result == RESULT_OK:
                         proj_param = _transform_fcn(values, point=False)
                         coordinates.setNodeParameters(fc, -1, node_derivatives[d], version, proj_param)
 
