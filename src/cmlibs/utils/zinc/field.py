@@ -653,6 +653,15 @@ def orphan_field_by_name(fieldmodule: Fieldmodule, name: str):
 
 
 def determine_node_field_derivatives(region, coordinates, include_versions=False):
+    """
+    Create Node Value fields for each node derivative.
+    Expensive as needs to query parameters across nodes.
+    :param region: Region coordinates field belongs to.
+    :param coordinates: Finite element field to query.
+    :param include_versions: Set to True to search for versions above 1, False to return version 1 only.
+    :return: List over node derivatives D1, D2, D12, D3, D13, D23, D123 of list of Node Value fields giving
+    the derivative value for either version 1 or versions 1..N of those parameters at any node.
+    """
     fm = region.getFieldmodule()
     with ChangeManager(fm):
         nodes = fm.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
@@ -672,10 +681,12 @@ def determine_node_field_derivatives(region, coordinates, include_versions=False
         max_versions = [1] * derivatives_count
         last_version = 1
         version = 2
-        while True:
+        new_found_count = 1 if include_versions else 0
+        while new_found_count > 0:
             nodeIter = nodes.createNodeiterator()
             node = nodeIter.next()
             found_count = sum((1 if (v < last_version) else 0) for v in max_versions)
+            new_found_count = 0
             while (node.isValid()) and (found_count < derivatives_count):
                 fc.setNode(node)
                 for d in range(derivatives_count):
@@ -685,9 +696,8 @@ def determine_node_field_derivatives(region, coordinates, include_versions=False
                             max_versions[d] = version
                             node_derivative_fields[d].append(fm.createFieldNodeValue(coordinates, node_derivatives[d], version))
                             found_count += 1
+                            new_found_count += 1
                 node = nodeIter.next()
-            if found_count >= derivatives_count or not include_versions:
-                break
             last_version = version
             version += 1
 
