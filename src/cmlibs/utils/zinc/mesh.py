@@ -165,24 +165,23 @@ def _find_connected(element_nodes, seed_index=None):
         if element_index == seed_index:
             continue
 
-        new_index = len(connected_nodes)
+        working_index = len(connected_nodes)
+        working_set = set(element_nodes[element_index])
         connected_elements.append([element_index])
-        connected_nodes.append(set(element_nodes[element_index]))
+        connected_nodes.append(working_set)
 
         connection_indices = []
-        base_set = set(element_nodes[element_index])
-        for target_index in range(new_index - 1, -1, -1):
+        for target_index in range(working_index - 1, -1, -1):
             target_set = connected_nodes[target_index]
-            intersection = base_set & target_set
-            if intersection:
+            if working_set & target_set:
                 connection_indices.append(target_index)
 
         for connection_index in connection_indices:
-            connected_elements[connection_index].extend(connected_elements[new_index])
-            connected_nodes[connection_index].update(connected_nodes[new_index])
-            del connected_elements[new_index]
-            del connected_nodes[new_index]
-            new_index = connection_index
+            connected_elements[connection_index].extend(connected_elements[working_index])
+            connected_nodes[connection_index].update(connected_nodes[working_index])
+            del connected_elements[working_index]
+            del connected_nodes[working_index]
+            working_index = connection_index
 
     return connected_elements[0] if seeded else connected_elements
 
