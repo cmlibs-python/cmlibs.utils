@@ -1,3 +1,5 @@
+import time
+
 from cmlibs.zinc.field import FieldGroup
 
 from cmlibs.utils.zinc.general import ChangeManager
@@ -78,7 +80,7 @@ def _find_and_remove_repeated_elements(element_identifiers, element_nodes, mesh)
         del element_nodes[repeat]
 
 
-def find_connected_mesh_elements_0d(mesh_field, mesh_dimension=3, remove_repeated=False):
+def find_connected_mesh_elements_0d(mesh_field, mesh_dimension=3, remove_repeated=False, ignore_elements=None, progress_callback=None):
     """
     Find the sets of connected elements from the mesh defined over the mesh_field.
     Each list of element identifiers returned is a connected set of elements.
@@ -86,6 +88,9 @@ def find_connected_mesh_elements_0d(mesh_field, mesh_dimension=3, remove_repeate
     :param mesh_field: A field defined over the mesh.
     :param mesh_dimension: The dimension of the mesh to work with, default 3.
     :param remove_repeated: Find and remove elements that use the same nodes, default False.
+    :param ignore_elements: An iterable of element identifiers to ignore.
+    :param progress_callback: A callback to report progress to, should return True if the process
+    is to continue and False if the process has been cancelled.
     :return: A list of lists of element identifiers.
     """
     field_module = mesh_field.getFieldmodule()
@@ -95,7 +100,24 @@ def find_connected_mesh_elements_0d(mesh_field, mesh_dimension=3, remove_repeate
     if remove_repeated:
         _find_and_remove_repeated_elements(element_identifiers, element_nodes, mesh)
 
-    connected_sets = _find_connected(element_nodes)
+    if ignore_elements is None:
+        ignore_element_indices = None
+    else:
+        st_time = time.time()
+        print(len(element_identifiers))
+        identifier_map = dict(zip(element_identifiers, range(len(element_identifiers))))
+        ignore_element_indices = [identifier_map[i] for i in ignore_elements]
+        tmp = sorted(list(ignore_elements))
+        print('m', tmp[:10])
+        for m in tmp[:10]:
+            print('m', m)
+        print('m', ignore_element_indices[:10])
+        for m in ignore_element_indices[:10]:
+            print('m', element_identifiers.index(m))
+        print(len(element_identifiers))
+        print(f"Elapsed time (z): {time.time() - st_time}")
+
+    connected_sets = _find_connected(element_nodes, ignore_element_indices=ignore_element_indices, progress_callback=progress_callback)
     if connected_sets is None:
         return
 
@@ -153,17 +175,45 @@ def _print_node_sets(mesh_field, sets):
         print(sorted(node_ids))
 
 
-def _find_connected(element_nodes, seed_index=None):
+def _find_connected(element_nodes, seed_index=None, ignore_element_indices=None, progress_callback=None):
     seeded = True
     if seed_index is None:
         seeded = False
         seed_index = 0
 
+    num_elements = len(element_nodes)
+    index_deletion_map = {}
+    st_time = time.time()
+    if ignore_element_indices is not None:
+        element_indices = list(range(num_elements))
+        print(f"Elapsed time (1): {time.time() - st_time}")
+        element_nodes = element_nodes[:]
+        print(f"Elapsed time (2): {time.time() - st_time}")
+        for i in sorted(ignore_element_indices, reverse=True):
+            del element_nodes[i]
+            del element_indices[i]
+        print(f"Elapsed time (3): {time.time() - st_time}")
+        # after_deletion_indices = [i for i in original_indices if i not in ignore_element_indices]
+        # print(f"Elapsed time: {time.time() - st_time}")
+        index_deletion_map = {v: k for v, k in enumerate(element_indices)}
+        print(f"Elapsed time (4): {time.time() - st_time}")
+
+    update_indexes = {}
+    if progress_callback is not None:
+
+        update_interval = max(1, int(num_elements * 0.01))
+        update_indexes = set([i for i in range(update_interval)] + [i for i in range(update_interval, num_elements, update_interval)])
+
+    print(f"Elapsed time (a): {time.time() - st_time}")
     connected_elements = [[seed_index]]
     connected_nodes = [set(element_nodes[seed_index])]
     for element_index, element in enumerate(element_nodes):
         if element_index == seed_index:
             continue
+
+        if element_index in update_indexes:
+            if progress_callback(element_index):
+                return None
 
         working_index = len(connected_nodes)
         working_set = set(element_nodes[element_index])
@@ -182,6 +232,15 @@ def _find_connected(element_nodes, seed_index=None):
             del connected_elements[working_index]
             del connected_nodes[working_index]
             working_index = connection_index
+
+    print(f"Elapsed time (b): {time.time() - st_time}")
+    if ignore_element_indices is not None:
+        remapped_connected_elements = []
+        for connected_element in connected_elements:
+            remapped_connected_elements.append([index_deletion_map[c] for c in connected_element])
+
+        connected_elements = remapped_connected_elements
+    print(f"Elapsed time (c): {time.time() - st_time}")
 
     return connected_elements[0] if seeded else connected_elements
 
@@ -206,4 +265,3 @@ def _find_duplicates(element_nodes):
             duplicates.extend(count[1:])
 
     return sorted(duplicates, reverse=True)
-
