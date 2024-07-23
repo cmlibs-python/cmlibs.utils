@@ -21,17 +21,18 @@ def create_triangle_elements(mesh: Mesh, finite_element_field: Field, element_no
     """
     assert mesh.getDimension() == 2
     assert finite_element_field.castFiniteElement().isValid()
-    fieldmodule = finite_element_field.getFieldmodule()
-    element_template = mesh.createElementtemplate()
-    element_template.setElementShapeType(Element.SHAPE_TYPE_TRIANGLE)
-    linear_basis = fieldmodule.createElementbasis(2, Elementbasis.FUNCTION_TYPE_LINEAR_SIMPLEX)
-    eft = mesh.createElementfieldtemplate(linear_basis)
-    element_template.defineField(finite_element_field, -1, eft)
-    with ChangeManager(fieldmodule):
+    field_module = finite_element_field.getFieldmodule()
+    with ChangeManager(field_module):
+        element_template = mesh.createElementtemplate()
+        element_template.setElementShapeType(Element.SHAPE_TYPE_TRIANGLE)
+        linear_basis = field_module.createElementbasis(2, Elementbasis.FUNCTION_TYPE_LINEAR_SIMPLEX)
+        eft = mesh.createElementfieldtemplate(linear_basis)
+        element_template.defineField(finite_element_field, -1, eft)
         for element_nodes in element_node_set:
             element = mesh.createElement(-1, element_template)
             element.setNodesByIdentifier(eft, element_nodes)
-    fieldmodule.defineAllFaces()
+
+        field_module.defineAllFaces()
 
 
 def create_cube_element(mesh: Mesh, finite_element_field: Field, node_coordinate_set):
