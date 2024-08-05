@@ -388,3 +388,52 @@ def group_evaluate_representative_point(group, coordinate_field,
     elif nodeset_group:
         return evaluate_field_nodeset_mean(coordinate_field, nodeset_group)
     return None
+
+
+def groups_have_same_local_contents(group1, group2):
+    """
+    Determine if two groups have the same contents in the local/owning region only.
+    Empty and non-existent mesh/nodeset groups are considered to be the same.
+    :param group1: Zinc group.
+    :param group2: Zinc group from same region as group1.
+    :return: True if same contents, otherwise False.
+    """
+    fieldmodule = group1.getFieldmodule()
+    assert fieldmodule.getRegion() == group2.getFieldmodule().getRegion()
+    for dimension in range(3, 0, -1):
+        mesh = fieldmodule.findMeshByDimension(dimension)
+        mesh_group1 = group1.getMeshGroup(mesh)
+        size1 = mesh_group1.getSize() if mesh_group1.isValid() else 0
+        mesh_group2 = group2.getMeshGroup(mesh)
+        size2 = mesh_group2.getSize() if mesh_group2.isValid() else 0
+        if size1 != size2:
+            return False
+        if size1 > 0:
+            element_iter1 = mesh_group1.createElementiterator()
+            element_iter2 = mesh_group2.createElementiterator()
+            element1 = element_iter1.next()
+            element2 = element_iter2.next()
+            while element1.isValid():
+                if element1 != element2:
+                    return False
+                element1 = element_iter1.next()
+                element2 = element_iter2.next()
+    for field_domain_type in (Field.DOMAIN_TYPE_NODES, Field.DOMAIN_TYPE_DATAPOINTS):
+        nodeset = fieldmodule.findNodesetByFieldDomainType(field_domain_type)
+        nodeset_group1 = group1.getNodesetGroup(nodeset)
+        size1 = nodeset_group1.getSize() if nodeset_group1.isValid() else 0
+        nodeset_group2 = group2.getNodesetGroup(nodeset)
+        size2 = nodeset_group2.getSize() if nodeset_group2.isValid() else 0
+        if size1 != size2:
+            return False
+        if size1 > 0:
+            node_iter1 = nodeset_group1.createNodeiterator()
+            node_iter2 = nodeset_group2.createNodeiterator()
+            node1 = node_iter1.next()
+            node2 = node_iter2.next()
+            while node1.isValid():
+                if node1 != node2:
+                    return False
+                node1 = node_iter1.next()
+                node2 = node_iter2.next()
+    return True
