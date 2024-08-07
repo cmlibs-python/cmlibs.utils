@@ -396,10 +396,11 @@ def groups_have_same_local_contents(group1, group2):
     Empty and non-existent mesh/nodeset groups are considered to be the same.
     :param group1: Zinc group.
     :param group2: Zinc group from same region as group1.
-    :return: True if same contents, otherwise False.
+    :return: True if same contents, otherwise False. False is returned if region mismatch.
     """
     fieldmodule = group1.getFieldmodule()
-    assert fieldmodule.getRegion() == group2.getFieldmodule().getRegion()
+    if fieldmodule.getRegion() != group2.getFieldmodule().getRegion():
+        return False
     for dimension in range(3, 0, -1):
         mesh = fieldmodule.findMeshByDimension(dimension)
         mesh_group1 = group1.getMeshGroup(mesh)
@@ -437,3 +438,27 @@ def groups_have_same_local_contents(group1, group2):
                 node1 = node_iter1.next()
                 node2 = node_iter2.next()
     return True
+
+
+def group_add_group_local_contents(group, source_group):
+    """
+    Add to group the local contents (nodes, elements) of source group.
+    :param group: Zinc group to add to.
+    :param source_group: Zinc group from same region as group to add from.
+    """
+    fieldmodule = group.getFieldmodule()
+    if fieldmodule.getRegion() != source_group.getFieldmodule().getRegion():
+        return  # not supported
+    with ChangeManager(fieldmodule):
+        for dimension in range(3, 0, -1):
+            mesh = fieldmodule.findMeshByDimension(dimension)
+            source_mesh_group = source_group.getMeshGroup(mesh)
+            if source_mesh_group.isValid() and (source_mesh_group.getSize() > 0):
+                mesh_group = group.getOrCreateMeshGroup(mesh)
+                mesh_group.addElementsConditional(source_group)
+        for field_domain_type in (Field.DOMAIN_TYPE_NODES, Field.DOMAIN_TYPE_DATAPOINTS):
+            nodeset = fieldmodule.findNodesetByFieldDomainType(field_domain_type)
+            source_nodeset_group = source_group.getNodesetGroup(nodeset)
+            if source_nodeset_group.isValid() and (source_nodeset_group.getSize() > 0):
+                nodeset_group = group.getOrCreateNodesetGroup(nodeset)
+                nodeset_group.addNodesConditional(source_group)
