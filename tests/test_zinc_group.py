@@ -1,8 +1,11 @@
 import os
 import unittest
-from cmlibs.utils.zinc.group import group_evaluate_centroid, group_evaluate_representative_point
+from cmlibs.utils.zinc.group import (
+    group_add_group_local_contents, group_evaluate_centroid, group_evaluate_representative_point,
+    groups_have_same_local_contents)
 from cmlibs.zinc.context import Context
 from cmlibs.zinc.element import Element
+from cmlibs.zinc.field import Field
 from cmlibs.zinc.result import RESULT_OK
 from utilities import assert_almost_equal_list, get_test_resource_name
 
@@ -62,3 +65,48 @@ class ZincGroupTestCase(unittest.TestCase):
         representative_point = group_evaluate_representative_point(
             group, coordinates, is_exterior=True, is_on_face=Element.FACE_TYPE_XI3_1)
         assert_almost_equal_list(self, representative_point, expected_centroid, delta=TOL)
+
+    def test_group_add_compare_group_local_contents(self):
+        """
+        Test utility functions for adding and comparing group local contents.
+        """
+        context = Context("test")
+        region = context.createRegion()
+        exf_file_name = get_test_resource_name('quarter_tube.exf')
+        self.assertEqual(RESULT_OK, region.readFile(exf_file_name))
+
+        fieldmodule = region.getFieldmodule()
+        mesh3d = fieldmodule.findMeshByDimension(3)
+        self.assertEqual(1, mesh3d.getSize())
+        mesh2d = fieldmodule.findMeshByDimension(2)
+        self.assertEqual(6, mesh2d.getSize())
+        mesh1d = fieldmodule.findMeshByDimension(1)
+        self.assertEqual(12, mesh1d.getSize())
+        nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+        self.assertEqual(8, nodes.getSize())
+        datapoints = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_DATAPOINTS)
+        self.assertEqual(0, datapoints.getSize())
+
+        group1 = fieldmodule.findFieldByName("group1").castGroup()
+        self.assertTrue(group1.isValid())
+        group2 = fieldmodule.createFieldGroup()
+        group_add_group_local_contents(group2, group1)
+        self.assertEqual(1, group2.getMeshGroup(mesh3d).getSize())
+        self.assertEqual(6, group2.getMeshGroup(mesh2d).getSize())
+        self.assertEqual(12, group2.getMeshGroup(mesh1d).getSize())
+        self.assertEqual(8, group2.getNodesetGroup(nodes).getSize())
+        self.assertTrue(groups_have_same_local_contents(group1, group2))
+
+        group3 = fieldmodule.createFieldGroup()
+        group3.createMeshGroup(mesh2d).addElement(mesh2d.findElementByIdentifier(3))
+        group3.createNodesetGroup(nodes).addNode(nodes.findNodeByIdentifier(9))
+        self.assertFalse(group3.isEmptyLocal())
+        self.assertFalse(group3.isEmpty())
+        self.assertFalse(groups_have_same_local_contents(group1, group3))
+        group4 = fieldmodule.createFieldGroup()
+        group_add_group_local_contents(group4, group3)
+        self.assertEqual(0, group4.getMeshGroup(mesh3d).getSize())
+        self.assertEqual(1, group4.getMeshGroup(mesh2d).getSize())
+        self.assertEqual(0, group4.getMeshGroup(mesh1d).getSize())
+        self.assertEqual(1, group4.getNodesetGroup(nodes).getSize())
+        self.assertTrue(groups_have_same_local_contents(group3, group4))
