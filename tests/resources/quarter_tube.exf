@@ -296,19 +296,6 @@ Element: 1
  1 2 3 4 5 6
  Nodes:
  1 2 5 6 9 10 13 14
-Group name: .scene_selection
-!#nodeset nodes
-Node group:
-1..2,5..6,9..10,13..14
-!#mesh mesh1d, dimension=1, nodeset=nodes
-Element group:
-1..12
-!#mesh mesh2d, dimension=2, face mesh=mesh1d, nodeset=nodes
-Element group:
-1..6
-!#mesh mesh3d, dimension=3, face mesh=mesh2d, nodeset=nodes
-Element group:
-1
 Group name: group1
 !#nodeset nodes
 Node group:
