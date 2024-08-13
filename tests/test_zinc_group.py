@@ -122,3 +122,15 @@ class ZincGroupTestCase(unittest.TestCase):
         self.assertEqual(0, group2.getMeshGroup(mesh2d).getSize())
         self.assertEqual(0, group2.getMeshGroup(mesh1d).getSize())
         self.assertEqual(0, group2.getNodesetGroup(nodes).getSize())
+        # check group 1 is unmodified
+        self.assertEqual(1, group1.getMeshGroup(mesh3d).getSize())
+        self.assertEqual(6, group1.getMeshGroup(mesh2d).getSize())
+        self.assertEqual(12, group1.getMeshGroup(mesh1d).getSize())
+        self.assertEqual(8, group1.getNodesetGroup(nodes).getSize())
+
+        # test can remove group's own contents
+        group_remove_group_local_contents(group1, group1)
+        self.assertEqual(0, group1.getMeshGroup(mesh3d).getSize())
+        self.assertEqual(0, group1.getMeshGroup(mesh2d).getSize())
+        self.assertEqual(0, group1.getMeshGroup(mesh1d).getSize())
+        self.assertEqual(0, group1.getNodesetGroup(nodes).getSize())
