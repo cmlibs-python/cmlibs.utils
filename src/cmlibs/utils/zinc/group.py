@@ -467,7 +467,7 @@ def group_add_group_local_contents(group, source_group):
 def group_remove_group_local_contents(group, source_group):
     """
     Remove from group i.e. ensure it does not contain the local contents (nodes, elements) of source group.
-    :param group: Zinc group to add to. Its SubelementHandlingMode affects behaviour.
+    :param group: Zinc group to remove from. Its SubelementHandlingMode affects behaviour.
     :param source_group: Zinc group from same region as group with local contents to remove.
     """
     fieldmodule = group.getFieldmodule()
