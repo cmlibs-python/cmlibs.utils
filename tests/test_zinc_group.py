@@ -1,8 +1,8 @@
 import os
 import unittest
 from cmlibs.utils.zinc.group import (
-    group_add_group_local_contents, group_evaluate_centroid, group_evaluate_representative_point,
-    groups_have_same_local_contents)
+    group_add_group_local_contents, group_evaluate_centroid, group_remove_group_local_contents,
+    group_evaluate_representative_point, groups_have_same_local_contents)
 from cmlibs.zinc.context import Context
 from cmlibs.zinc.element import Element
 from cmlibs.zinc.field import Field
@@ -110,3 +110,15 @@ class ZincGroupTestCase(unittest.TestCase):
         self.assertEqual(0, group4.getMeshGroup(mesh1d).getSize())
         self.assertEqual(1, group4.getNodesetGroup(nodes).getSize())
         self.assertTrue(groups_have_same_local_contents(group3, group4))
+
+        group_remove_group_local_contents(group2, group3)
+        self.assertEqual(1, group2.getMeshGroup(mesh3d).getSize())
+        self.assertEqual(5, group2.getMeshGroup(mesh2d).getSize())
+        self.assertEqual(12, group2.getMeshGroup(mesh1d).getSize())
+        self.assertEqual(7, group2.getNodesetGroup(nodes).getSize())
+
+        group_remove_group_local_contents(group2, group1)
+        self.assertEqual(0, group2.getMeshGroup(mesh3d).getSize())
+        self.assertEqual(0, group2.getMeshGroup(mesh2d).getSize())
+        self.assertEqual(0, group2.getMeshGroup(mesh1d).getSize())
+        self.assertEqual(0, group2.getNodesetGroup(nodes).getSize())
