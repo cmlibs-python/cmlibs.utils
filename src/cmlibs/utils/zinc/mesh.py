@@ -245,7 +245,7 @@ def _find_duplicates(element_nodes):
     return sorted(duplicates, reverse=True)
 
 
-def _undefine_field_on_mesh(field, mesh_group):
+def _undefine_field_on_elements(field, mesh_group):
     element_template = mesh_group.createElementtemplate()
     element_template.undefineField(field)
     element_iter = mesh_group.createElementiterator()
@@ -278,4 +278,4 @@ def undefine_field(field):
         for i in range(mesh.getDimension(), 0, -1):
             mesh = fm.findMeshByDimension(i)
             mesh_group = mesh
-            _undefine_field_on_mesh(field, mesh_group)
+            _undefine_field_on_elements(field, mesh_group)
