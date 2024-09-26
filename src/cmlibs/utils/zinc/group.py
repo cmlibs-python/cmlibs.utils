@@ -441,9 +441,9 @@ def _have_same_content(group1, group2, content_source, get_content_group_method,
 
 def group_add_group_local_contents(group, source_group):
     """
-    Add to group the local contents (nodes, elements) of source group.
-    :param group: Zinc group to add to.
-    :param source_group: Zinc group from same region as group to add from.
+    Add to group i.e. ensure it contains the local contents (nodes, elements) of source group.
+    :param group: Zinc group to add to. Its SubelementHandlingMode affects behaviour.
+    :param source_group: Zinc group from same region as group with local contents to add.
     """
     fieldmodule = group.getFieldmodule()
     if fieldmodule.getRegion() != source_group.getFieldmodule().getRegion():
@@ -461,3 +461,29 @@ def group_add_group_local_contents(group, source_group):
             if source_nodeset_group.isValid() and (source_nodeset_group.getSize() > 0):
                 nodeset_group = group.getOrCreateNodesetGroup(nodeset)
                 nodeset_group.addNodesConditional(source_group)
+
+
+def group_remove_group_local_contents(group, source_group):
+    """
+    Remove from group i.e. ensure it does not contain the local contents (nodes, elements) of source group.
+    :param group: Zinc group to remove from. Its SubelementHandlingMode affects behaviour.
+    :param source_group: Zinc group from same region as group with local contents to remove.
+    """
+    fieldmodule = group.getFieldmodule()
+    if fieldmodule.getRegion() != source_group.getFieldmodule().getRegion():
+        return  # not supported
+    with ChangeManager(fieldmodule):
+        for dimension in range(3, 0, -1):
+            mesh = fieldmodule.findMeshByDimension(dimension)
+            source_mesh_group = source_group.getMeshGroup(mesh)
+            if source_mesh_group.isValid() and (source_mesh_group.getSize() > 0):
+                mesh_group = group.getMeshGroup(mesh)
+                if mesh_group.isValid() and (mesh_group.getSize() > 0):
+                    mesh_group.removeElementsConditional(source_group)
+        for field_domain_type in (Field.DOMAIN_TYPE_NODES, Field.DOMAIN_TYPE_DATAPOINTS):
+            nodeset = fieldmodule.findNodesetByFieldDomainType(field_domain_type)
+            source_nodeset_group = source_group.getNodesetGroup(nodeset)
+            if source_nodeset_group.isValid() and (source_nodeset_group.getSize() > 0):
+                nodeset_group = group.getNodesetGroup(nodeset)
+                if nodeset_group.isValid() and (nodeset_group.getSize() > 0):
+                    nodeset_group.removeNodesConditional(source_group)
