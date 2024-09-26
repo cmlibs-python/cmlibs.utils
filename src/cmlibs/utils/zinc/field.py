@@ -535,8 +535,7 @@ def find_or_create_field_texture_coordinates(fieldmodule: Fieldmodule, name="tex
                                                component_names=("u", "v", "w"), managed=managed, type_coordinate=True)
 
 
-def create_field_stored_mesh_location(fieldmodule: Fieldmodule, mesh: Mesh, name=None, managed=False)\
-        -> FieldStoredMeshLocation:
+def create_field_stored_mesh_location(fieldmodule: Fieldmodule, mesh: Mesh, name=None, managed=False) -> FieldStoredMeshLocation:
     """
     Create a stored mesh location field for storing locations in the
     supplied mesh, used for storing data projections.
@@ -557,8 +556,7 @@ def create_field_stored_mesh_location(fieldmodule: Fieldmodule, mesh: Mesh, name
     return mesh_location_field
 
 
-def find_or_create_field_stored_mesh_location(fieldmodule: Fieldmodule, mesh: Mesh, name=None, managed=True)\
-        -> FieldStoredMeshLocation:
+def find_or_create_field_stored_mesh_location(fieldmodule: Fieldmodule, mesh: Mesh, name=None, managed=True) -> FieldStoredMeshLocation:
     """
     Get or create a stored mesh location field for storing locations in the
     supplied mesh, used for storing data projections.
