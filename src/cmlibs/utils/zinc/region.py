@@ -44,16 +44,9 @@ def convert_nodes_to_datapoints(target_region, source_region):
                     datapoint.setIdentifier(new_identifier)
 
             # transfer nodes as datapoints to target_region
-            sir = source_region.createStreaminformationRegion()
-            srm = sir.createStreamresourceMemory()
-            sir.setResourceDomainTypes(srm, Field.DOMAIN_TYPE_NODES)
-            source_region.write(sir)
-            result, buffer = srm.getBuffer()
-            assert result == RESULT_OK, "Failed to write nodes"
+            buffer = write_to_buffer(source_region, resource_domain_type=Field.DOMAIN_TYPE_NODES)
             buffer = buffer.replace(bytes("!#nodeset nodes", "utf-8"), bytes("!#nodeset datapoints", "utf-8"))
-            sir = target_region.createStreaminformationRegion()
-            sir.createStreamresourceMemoryBuffer(buffer)
-            result = target_region.read(sir)
+            result = read_from_buffer(target_region, buffer)
             assert result == RESULT_OK, "Failed to load nodes as datapoints"
             nodes.destroyAllNodes()
 
@@ -64,20 +57,9 @@ def copy_nodeset(region, nodeset):
     Expects the corresponding nodeset in the region the nodeset is being copied to, to be empty.
     """
     source_region = nodeset.getFieldmodule().getRegion()
-    sir = source_region.createStreaminformationRegion()
-    srm = sir.createStreamresourceMemory()
-
-    if nodeset.getName() == "datapoints":
-        sir.setResourceDomainTypes(srm, Field.DOMAIN_TYPE_DATAPOINTS)
-    else:
-        sir.setResourceDomainTypes(srm, Field.DOMAIN_TYPE_NODES)
-
-    source_region.write(sir)
-    result, buffer = srm.getBuffer()
-    assert result == RESULT_OK, f"Failed to write {nodeset.getName()}"
-    sir = region.createStreaminformationRegion()
-    sir.createStreamresourceMemoryBuffer(buffer)
-    result = region.read(sir)
+    resource_domain_type = Field.DOMAIN_TYPE_DATAPOINTS if nodeset.getName() == "datapoints" else Field.DOMAIN_TYPE_NODES
+    buffer = write_to_buffer(source_region, resource_domain_type=resource_domain_type)
+    result = read_from_buffer(region, buffer)
     assert result == RESULT_OK, f"Failed to load {nodeset.getName()}, result " + str(result)
 
 
@@ -119,3 +101,37 @@ def determine_appropriate_glyph_size(region, coordinates):
         del fieldcache
 
     return glyph_width
+
+
+def write_to_buffer(region, resource_domain_type=None, field_names=None):
+    """
+    Write the contents of the given region to a buffer.
+    The content written to the buffer can be controlled with resource domain type and field names.
+
+    :param region: The Zinc Region to write the content from.
+    :param resource_domain_type: Should be either Field.DOMAIN_TYPE_DATAPOINTS or Field.DOMAIN_TYPE_NODES.
+    :param field_names: A list of field names to output.
+    :return: The buffer in bytes written from the region.
+    """
+    sir = region.createStreaminformationRegion()
+    srm = sir.createStreamresourceMemory()
+    if resource_domain_type is not None:
+        sir.setResourceDomainTypes(srm, resource_domain_type)
+    if field_names is not None:
+        sir.setFieldNames(field_names)
+    region.write(sir)
+    result, buffer = srm.getBuffer()
+    return buffer
+
+
+def read_from_buffer(region, buffer):
+    """
+    Read the given buffer into the given region.
+
+    :param region: A Zinc Region to read the buffer into.
+    :param buffer: A buffer of bytes.
+    :return: The result of the region read operation.
+    """
+    temp_sir = region.createStreaminformationRegion()
+    temp_sir.createStreamresourceMemoryBuffer(buffer)
+    return region.read(temp_sir)
