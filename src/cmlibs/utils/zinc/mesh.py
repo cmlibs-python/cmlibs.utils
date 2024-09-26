@@ -1,5 +1,6 @@
-from cmlibs.zinc.field import FieldGroup
+from cmlibs.zinc.field import FieldGroup, Field
 
+from cmlibs.utils.zinc.finiteelement import get_highest_dimension_mesh
 from cmlibs.utils.zinc.general import ChangeManager
 
 
@@ -242,3 +243,39 @@ def _find_duplicates(element_nodes):
             duplicates.extend(count[1:])
 
     return sorted(duplicates, reverse=True)
+
+
+def _undefine_field_on_elements(field, mesh_group):
+    element_template = mesh_group.createElementtemplate()
+    element_template.undefineField(field)
+    element_iter = mesh_group.createElementiterator()
+    element = element_iter.next()
+    while element.isValid():
+        element.merge(element_template)
+        element = element_iter.next()
+
+
+def undefine_field(field):
+    """
+    Undefine field over whole mesh in the given fields field module.
+    :param field: Finite element field to undefine.
+    """
+    fm = field.getFieldmodule()
+    mesh = get_highest_dimension_mesh(fm)
+    nodes = fm.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+    nodeset_group = nodes
+    with ChangeManager(fm):
+        # Undefine over nodes
+        node_template = nodeset_group.createNodetemplate()
+        node_template.undefineField(field)
+        node_iter = nodeset_group.createNodeiterator()
+        node = node_iter.next()
+        while node.isValid():
+            node.merge(node_template)
+            node = node_iter.next()
+
+        # Undefine over elements
+        for i in range(mesh.getDimension(), 0, -1):
+            mesh = fm.findMeshByDimension(i)
+            mesh_group = mesh
+            _undefine_field_on_elements(field, mesh_group)
