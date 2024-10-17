@@ -121,7 +121,7 @@ def write_to_buffer(region, resource_domain_type=None, field_names=None):
         sir.setFieldNames(field_names)
     region.write(sir)
     result, buffer = srm.getBuffer()
-    return buffer
+    return buffer if result == RESULT_OK else None
 
 
 def read_from_buffer(region, buffer):
