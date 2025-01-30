@@ -29,6 +29,17 @@ def field_is_managed_group(field_in: Field):
     return field_in.castGroup().isValid() and field_in.isManaged()
 
 
+def field_is_managed_group_mesh(field_in: Field, mesh: Mesh):
+    """
+    Chooser conditional function limiting to field group with a mesh group for mesh.
+    """
+    if field_is_managed_group(field_in):
+        mesh_group = field_in.castGroup().getMeshGroup(mesh)
+        return mesh_group.isValid()
+
+    return False
+
+
 def field_is_managed_real_1_to_3_components(field_in: Field):
     """
     Conditional function returning True if the field is real-valued
