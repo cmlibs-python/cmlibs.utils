@@ -6,7 +6,7 @@ from cmlibs.zinc.element import Mesh
 from cmlibs.zinc.field import Field, FieldFiniteElement, FieldGroup, \
     FieldStoredMeshLocation
 from cmlibs.zinc.fieldmodule import Fieldmodule
-from cmlibs.zinc.node import Nodeset, Node
+from cmlibs.zinc.node import Node
 from cmlibs.zinc.result import RESULT_OK, RESULT_WARNING_PART_DONE
 
 from cmlibs.utils.zinc.region import write_to_buffer, read_from_buffer
