@@ -6,7 +6,7 @@ from cmlibs.zinc.element import Mesh
 from cmlibs.zinc.field import Field, FieldFiniteElement, FieldGroup, \
     FieldStoredMeshLocation
 from cmlibs.zinc.fieldmodule import Fieldmodule
-from cmlibs.zinc.node import Nodeset, Node
+from cmlibs.zinc.node import Node
 from cmlibs.zinc.result import RESULT_OK, RESULT_WARNING_PART_DONE
 
 from cmlibs.utils.zinc.region import write_to_buffer, read_from_buffer
@@ -27,6 +27,17 @@ def field_is_managed_group(field_in: Field):
     Conditional function returning True if the field is a managed Group.
     """
     return field_in.castGroup().isValid() and field_in.isManaged()
+
+
+def field_is_managed_group_mesh(field_in: Field, mesh: Mesh):
+    """
+    Chooser conditional function limiting to field group with a mesh group for mesh.
+    """
+    if field_is_managed_group(field_in):
+        mesh_group = field_in.castGroup().getMeshGroup(mesh)
+        return mesh_group.isValid()
+
+    return False
 
 
 def field_is_managed_real_1_to_3_components(field_in: Field):
