@@ -1,8 +1,4 @@
-import math
-
-from cmlibs.zinc.element import Element
 from cmlibs.zinc.field import FieldGroup, Field
-from cmlibs.zinc.result import RESULT_OK
 
 from cmlibs.utils.zinc.finiteelement import get_highest_dimension_mesh
 from cmlibs.utils.zinc.general import ChangeManager
@@ -282,65 +278,3 @@ def undefine_field(field):
             mesh = fm.findMeshByDimension(i)
             mesh_group = mesh
             _undefine_field_on_elements(field, mesh_group)
-
-
-def calculate_jacobian(coordinates):
-    """
-    Calculate the Jacobian for the input coordinate field.
-    If the coordinate field is not suitable for calculating
-    the Jacobian return None.
-    :param coordinates: Geometric coordinate field.
-    :return: Jacobian field.
-    """
-    jacobian = None
-    if coordinates is not None and coordinates.isValid() and coordinates.getNumberOfComponents() == 3:
-        fm = coordinates.getFieldmodule()
-        jacobian = fm.createFieldDotProduct(
-            fm.createFieldCrossProduct(
-                fm.createFieldDerivative(coordinates, 1),
-                fm.createFieldDerivative(coordinates, 2)),
-            fm.createFieldDerivative(coordinates, 3))
-        jacobian.setName("Jacobian")
-
-    return jacobian
-
-
-def report_on_lowest_value(real_field, group_field=None):
-    """
-    Evaluate the 3D mesh associated with the given (real) field and
-    report back on the element with the lowest field value.
-    Returns (-1, inf) if the evaluation of the mesh failed.
-    :param real_field: A real value field to find the lowest value of.
-    :param group_field: A group of 3D elements from the associated mesh (optional, default None).
-    :return: A tuple of element identifier and minimum value within that element.
-    """
-    minimum_element_id = -1
-    minimum_element_value = math.inf
-    if real_field is not None and real_field.isValid():
-        fm = real_field.getFieldmodule()
-        mesh_3d = fm.findMeshByDimension(3)
-        with ChangeManager(fm):
-            fc = fm.createFieldcache()
-            fr = fc.createFieldrange()
-
-            if group_field is not None:
-                if group_field.castGroup().isValid():
-                    mesh_group = group_field.castGroup().getMeshGroup(mesh_3d)
-                    element_iter = mesh_group.createElementiterator()
-                else:
-                    return -1, math.inf
-            else:
-                element_iter = mesh_3d.createElementiterator()
-            element = element_iter.next()
-            while element.isValid():
-                fc.setElement(element)
-                result = real_field.evaluateFieldrange(fc, fr)
-                if result == RESULT_OK:
-                    result, min_value, max_value = fr.getRangeReal(1)
-                    if result == RESULT_OK and min_value < minimum_element_value:
-                        minimum_element_id = element.getIdentifier()
-                        minimum_element_value = min_value
-
-                element = element_iter.next()
-
-    return minimum_element_id, minimum_element_value
