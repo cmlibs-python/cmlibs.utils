@@ -736,11 +736,12 @@ def _is_3_component_real_valued_field(field):
 
 def get_element_jacobian_field(coordinates, reference_coordinates=None):
     """
-    Get jacobian determinant of a 3-component coordinate field
-    w.r.t. 3-D element 'xi' (reference) coordinates. This value should always
-    be positive for valid right-handed elements, negative if the
-    element volume becomes negative or is left-handed w.r.t. xi (reference coordinates).
-    If the coordinate field is not suitable for calculating the Jacobian return None.
+    Get the Jacobian determinant of a 3-component coordinate field
+    w.r.t. 3-D element reference or 'xi'  coordinates if no reference coordinates are supplied.
+    This value should always be positive for valid right-handed elements, negative if the
+    element volume becomes negative or is left-handed w.r.t. the reference coordinates.
+    If the coordinate field or reference field is not suitable for calculating
+    the Jacobian, the function returns None.
     :param coordinates: Geometric coordinate field.
     :param reference_coordinates: Reference geometric coordinate field (default: 'xi').
     :return: Jacobian field.
