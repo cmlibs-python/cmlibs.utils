@@ -727,32 +727,37 @@ def _is_3_component_real_valued_field(field):
     return field is not None and field.isValid() and (field.getNumberOfComponents() == 3) and (field.getValueType() == Field.VALUE_TYPE_REAL)
 
 
-def create_jacobian_determinant_field(coordinates, reference_coordinates=None, name=None):
+def create_jacobian_determinant_field(coordinates, reference_coordinates, name=None):
     """
     Create the Jacobian determinant of a 3-component coordinate field
-    w.r.t. 3-D element reference or 'xi'  coordinates if no reference coordinates are supplied.
+    w.r.t. 3-D element reference coordinates.
     This value should always be positive for valid right-handed elements, negative if the
     element volume becomes negative or is left-handed w.r.t. the reference coordinates.
     If the coordinate field or reference field is not suitable for calculating
-    the Jacobian, the function returns None.
+    the Jacobian determinant, the function returns None.
     :param coordinates: Geometric coordinate field.
-    :param reference_coordinates: Reference geometric coordinate field (default: 'xi').
+    :param reference_coordinates: Reference geometric coordinate field.
     :param name: String to set as the name of the field.
-    :return: Jacobian field.
+    :return: Jacobian determinant field.
     """
-    jacobian = None
-    if _is_3_component_real_valued_field(coordinates):
+    jacobian_determinant = None
+    if _is_3_component_real_valued_field(coordinates) and _is_3_component_real_valued_field(reference_coordinates):
         fm = coordinates.getFieldmodule()
         with ChangeManager(fm):
-            reference_coordinates = fm.findFieldByName("xi") if reference_coordinates is None else reference_coordinates
-            if not _is_3_component_real_valued_field(reference_coordinates):
-                return jacobian
-
-            jacobian = fm.createFieldDeterminant(fm.createFieldGradient(coordinates, reference_coordinates))
+            jacobian_determinant = fm.createFieldDeterminant(fm.createFieldGradient(coordinates, reference_coordinates))
             if name is not None:
-                jacobian.setName(name)
+                jacobian_determinant.setName(name)
 
-    return jacobian
+    return jacobian_determinant
+
+
+def create_xi_reference_jacobian_determinant_field(coordinates):
+    jacobian_determinant = None
+    if type(coordinates) is Field and coordinates.isValid():
+        fm = coordinates.getFieldmodule()
+        jacobian_determinant = create_jacobian_determinant_field(coordinates, fm.findFieldByName("xi"), "Jacobian_determinant")
+
+    return jacobian_determinant
 
 
 # Create C++ style aliases for names of functions.

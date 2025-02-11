@@ -1,7 +1,7 @@
 import math
 import unittest
 
-from cmlibs.utils.zinc.field import create_field_finite_element, create_jacobian_determinant_field
+from cmlibs.utils.zinc.field import create_field_finite_element, create_xi_reference_jacobian_determinant_field
 from cmlibs.utils.zinc.finiteelement import get_scalar_field_minimum_in_mesh
 from cmlibs.zinc.context import Context
 from cmlibs.zinc.result import RESULT_OK
@@ -21,7 +21,7 @@ class ZincMeshTestCase(unittest.TestCase):
 
         fm = source_region.getFieldmodule()
         coordinates = fm.findFieldByName("coordinates")
-        jacobian = create_jacobian_determinant_field(coordinates)
+        jacobian = create_xi_reference_jacobian_determinant_field(coordinates)
         self.assertTrue(jacobian.isValid())
 
     def test_mesh_jacobian_result(self):
@@ -34,7 +34,7 @@ class ZincMeshTestCase(unittest.TestCase):
 
         fm = source_region.getFieldmodule()
         coordinates = fm.findFieldByName("coordinates")
-        jacobian = create_jacobian_determinant_field(coordinates)
+        jacobian = create_xi_reference_jacobian_determinant_field(coordinates)
         self.assertTrue(jacobian.isValid())
 
         result = get_scalar_field_minimum_in_mesh(jacobian)
@@ -48,7 +48,7 @@ class ZincMeshTestCase(unittest.TestCase):
 
         fm = source_region.getFieldmodule()
         coordinates = create_field_finite_element(fm, "coordinates", 3, type_coordinate=True)
-        jacobian = create_jacobian_determinant_field(coordinates)
+        jacobian = create_xi_reference_jacobian_determinant_field(coordinates)
         self.assertTrue(jacobian is None)
 
         result = get_scalar_field_minimum_in_mesh(jacobian)
@@ -63,7 +63,7 @@ class ZincMeshTestCase(unittest.TestCase):
         fm = source_region.getFieldmodule()
         coordinates = create_field_finite_element(fm, "coordinates", 3, type_coordinate=True)
         xi = create_field_finite_element(fm, "xi", 3)
-        jacobian = create_jacobian_determinant_field(coordinates)
+        jacobian = create_xi_reference_jacobian_determinant_field(coordinates)
         self.assertTrue(jacobian.isValid())
 
         result = get_scalar_field_minimum_in_mesh(jacobian)
@@ -81,7 +81,7 @@ class ZincMeshTestCase(unittest.TestCase):
 
         fm = source_region.getFieldmodule()
         coordinates = fm.findFieldByName("coordinates")
-        jacobian = create_jacobian_determinant_field(coordinates)
+        jacobian = create_xi_reference_jacobian_determinant_field(coordinates)
         self.assertTrue(jacobian.isValid())
 
         result = get_scalar_field_minimum_in_mesh(jacobian)
