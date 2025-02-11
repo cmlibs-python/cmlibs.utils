@@ -760,7 +760,7 @@ def create_xi_reference_jacobian_determinant_field(coordinates):
     :return: Jacobian determinant field.
     """
     jacobian_determinant = None
-    if type(coordinates) is Field and coordinates.isValid():
+    if isinstance(coordinates, Field) and coordinates.isValid():
         fm = coordinates.getFieldmodule()
         jacobian_determinant = create_jacobian_determinant_field(coordinates, fm.findFieldByName("xi"), "Jacobian_determinant")
 
