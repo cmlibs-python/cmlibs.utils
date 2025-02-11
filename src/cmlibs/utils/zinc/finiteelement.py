@@ -1,6 +1,8 @@
 """
 Utilities for creating and working with Zinc Finite Elements.
 """
+import math
+
 from cmlibs.maths import vectorops
 from cmlibs.utils.zinc.general import ChangeManager
 from cmlibs.zinc.element import Element, Elementbasis, Elementfieldtemplate, Mesh
@@ -615,6 +617,47 @@ def interpolate_cubic_hermite_derivative(v1, d1, v2, d2, xi):
     f3 = 6.0 * xi - 6.0 * xi2
     f4 = -2.0 * xi + 3.0 * xi2
     return [(f1 * v1[i] + f2 * d1[i] + f3 * v2[i] + f4 * d2[i]) for i in range(len(v1))]
+
+
+def _is_real_scalar_field(field):
+    return field is not None and field.isValid() and (field.getValueType() == Field.VALUE_TYPE_REAL) and (field.getNumberOfComponents() == 1)
+
+
+def get_scalar_field_minimum_in_mesh(real_field, mesh=None):
+    """
+    Evaluate the 3D mesh associated with the given (real) field and
+    report back on the element with the lowest field value. If the optional
+    mesh (or mesh_group) is not given then the highest dimension mesh available will be used.
+    Returns (-1, inf) if the evaluation is invalid.
+    :param real_field: A real scalar value field to find the lowest value of.
+    :param mesh: A mesh or mesh_group (optional, default None).
+    :return: A tuple of element identifier and minimum value within that element.
+    """
+    minimum_element_id = -1
+    minimum_element_value = math.inf
+    if _is_real_scalar_field(real_field):
+        fm = real_field.getFieldmodule()
+        fc = fm.createFieldcache()
+        fr = fc.createFieldrange()
+
+        in_use_mesh = mesh if mesh else get_highest_dimension_mesh(fm)
+        if in_use_mesh is None or not hasattr(in_use_mesh, "createElementiterator"):
+            return minimum_element_id, minimum_element_value
+
+        element_iter = in_use_mesh.createElementiterator()
+        element = element_iter.next()
+        while element.isValid():
+            fc.setElement(element)
+            result = real_field.evaluateFieldrange(fc, fr)
+            if result == RESULT_OK:
+                result, min_value, max_value = fr.getRangeReal(1)
+                if result == RESULT_OK and min_value < minimum_element_value:
+                    minimum_element_id = element.getIdentifier()
+                    minimum_element_value = min_value
+
+            element = element_iter.next()
+
+    return minimum_element_id, minimum_element_value
 
 
 createCubeElement = create_cube_element

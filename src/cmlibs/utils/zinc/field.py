@@ -1,9 +1,6 @@
 """
 Utilities for creating and working with Zinc Fields.
 """
-import math
-
-from cmlibs.utils.zinc.finiteelement import get_highest_dimension_mesh
 from cmlibs.utils.zinc.general import ChangeManager
 from cmlibs.zinc.element import Mesh
 from cmlibs.zinc.field import Field, FieldFiniteElement, FieldGroup, \
@@ -726,17 +723,13 @@ def find_coordinate_fields(region):
     return field_list
 
 
-def _is_real_scalar_field(field):
-    return field is not None and field.isValid() and (field.getValueType() == Field.VALUE_TYPE_REAL) and (field.getNumberOfComponents() == 1)
-
-
 def _is_3_component_real_valued_field(field):
     return field is not None and field.isValid() and (field.getNumberOfComponents() == 3) and (field.getValueType() == Field.VALUE_TYPE_REAL)
 
 
-def get_element_jacobian_field(coordinates, reference_coordinates=None):
+def create_jacobian_determinant_field(coordinates, reference_coordinates=None, name=None):
     """
-    Get the Jacobian determinant of a 3-component coordinate field
+    Create the Jacobian determinant of a 3-component coordinate field
     w.r.t. 3-D element reference or 'xi'  coordinates if no reference coordinates are supplied.
     This value should always be positive for valid right-handed elements, negative if the
     element volume becomes negative or is left-handed w.r.t. the reference coordinates.
@@ -744,6 +737,7 @@ def get_element_jacobian_field(coordinates, reference_coordinates=None):
     the Jacobian, the function returns None.
     :param coordinates: Geometric coordinate field.
     :param reference_coordinates: Reference geometric coordinate field (default: 'xi').
+    :param name: String to set as the name of the field.
     :return: Jacobian field.
     """
     jacobian = None
@@ -755,46 +749,10 @@ def get_element_jacobian_field(coordinates, reference_coordinates=None):
                 return jacobian
 
             jacobian = fm.createFieldDeterminant(fm.createFieldGradient(coordinates, reference_coordinates))
-            jacobian.setName("Jacobian")
+            if name is not None:
+                jacobian.setName(name)
 
     return jacobian
-
-
-def get_scalar_field_minimum_in_mesh(real_field, mesh=None):
-    """
-    Evaluate the 3D mesh associated with the given (real) field and
-    report back on the element with the lowest field value. If the optional
-    mesh (or mesh_group) is not given then the highest dimension mesh available will be used.
-    Returns (-1, inf) if the evaluation is invalid.
-    :param real_field: A real scalar value field to find the lowest value of.
-    :param mesh: A mesh or mesh_group (optional, default None).
-    :return: A tuple of element identifier and minimum value within that element.
-    """
-    minimum_element_id = -1
-    minimum_element_value = math.inf
-    if _is_real_scalar_field(real_field):
-        fm = real_field.getFieldmodule()
-        fc = fm.createFieldcache()
-        fr = fc.createFieldrange()
-
-        in_use_mesh = mesh if mesh else get_highest_dimension_mesh(fm)
-        if in_use_mesh is None or not hasattr(in_use_mesh, "createElementiterator"):
-            return minimum_element_id, minimum_element_value
-
-        element_iter = in_use_mesh.createElementiterator()
-        element = element_iter.next()
-        while element.isValid():
-            fc.setElement(element)
-            result = real_field.evaluateFieldrange(fc, fr)
-            if result == RESULT_OK:
-                result, min_value, max_value = fr.getRangeReal(1)
-                if result == RESULT_OK and min_value < minimum_element_value:
-                    minimum_element_id = element.getIdentifier()
-                    minimum_element_value = min_value
-
-            element = element_iter.next()
-
-    return minimum_element_id, minimum_element_value
 
 
 # Create C++ style aliases for names of functions.
