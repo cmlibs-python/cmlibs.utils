@@ -751,18 +751,19 @@ def create_jacobian_determinant_field(coordinates, reference_coordinates, name=N
     return jacobian_determinant
 
 
-def create_xi_reference_jacobian_determinant_field(coordinates):
+def create_xi_reference_jacobian_determinant_field(coordinates, name=None):
     """
     Calculate the Jacobian determinant w.r.t the 'xi' field.
     Returns None if the coordinates field is not a valid field.
     See also :func:create_jacobian_determinant_field.
     :param coordinates: Geometric coordinate field.
+    :param name: String to set as the name of the field, optional defaults to 'Jacobian_determinant'.
     :return: Jacobian determinant field.
     """
     jacobian_determinant = None
     if isinstance(coordinates, Field) and coordinates.isValid():
         fm = coordinates.getFieldmodule()
-        jacobian_determinant = create_jacobian_determinant_field(coordinates, fm.findFieldByName("xi"), "Jacobian_determinant")
+        jacobian_determinant = create_jacobian_determinant_field(coordinates, fm.findFieldByName("xi"), "Jacobian_determinant" if name is None else name)
 
     return jacobian_determinant
 
