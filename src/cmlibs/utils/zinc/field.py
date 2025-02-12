@@ -757,13 +757,13 @@ def create_xi_reference_jacobian_determinant_field(coordinates, name=None):
     Returns None if the coordinates field is not a valid field.
     See also :func:create_jacobian_determinant_field.
     :param coordinates: Geometric coordinate field.
-    :param name: String to set as the name of the field, optional defaults to 'Jacobian_determinant'.
+    :param name: String to set as the name of the field, optional defaults to 'Jacobian_determinant_wrt_xi'.
     :return: Jacobian determinant field.
     """
     jacobian_determinant = None
     if isinstance(coordinates, Field) and coordinates.isValid():
         fm = coordinates.getFieldmodule()
-        jacobian_determinant = create_jacobian_determinant_field(coordinates, fm.findFieldByName("xi"), "Jacobian_determinant" if name is None else name)
+        jacobian_determinant = create_jacobian_determinant_field(coordinates, fm.findFieldByName("xi"), "Jacobian_determinant_wrt_xi" if name is None else name)
 
     return jacobian_determinant
 
