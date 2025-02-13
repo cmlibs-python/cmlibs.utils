@@ -181,7 +181,6 @@ def _find_connected(element_nodes, seed_index=None, ignore_element_indices=None,
 
     update_indexes = {}
     if progress_callback is not None:
-
         update_interval = max(1, int(num_elements * 0.01))
         update_indexes = set([i for i in range(update_interval)] + [i for i in range(update_interval, num_elements, update_interval)])
 

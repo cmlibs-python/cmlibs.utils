@@ -723,6 +723,51 @@ def find_coordinate_fields(region):
     return field_list
 
 
+def _is_3_component_real_valued_field(field):
+    return field is not None and field.isValid() and (field.getNumberOfComponents() == 3) and (field.getValueType() == Field.VALUE_TYPE_REAL)
+
+
+def create_jacobian_determinant_field(coordinates, reference_coordinates, name=None):
+    """
+    Create the Jacobian determinant of a 3-component coordinate field
+    w.r.t. 3-D element reference coordinates.
+    This value should always be positive for valid right-handed elements, negative if the
+    element volume becomes negative or is left-handed w.r.t. the reference coordinates.
+    If the coordinate field or reference field is not suitable for calculating
+    the Jacobian determinant, the function returns None.
+    :param coordinates: Geometric coordinate field.
+    :param reference_coordinates: Reference geometric coordinate field.
+    :param name: String to set as the name of the field.
+    :return: Jacobian determinant field.
+    """
+    jacobian_determinant = None
+    if _is_3_component_real_valued_field(coordinates) and _is_3_component_real_valued_field(reference_coordinates):
+        fm = coordinates.getFieldmodule()
+        with ChangeManager(fm):
+            jacobian_determinant = fm.createFieldDeterminant(fm.createFieldGradient(coordinates, reference_coordinates))
+            if name is not None:
+                jacobian_determinant.setName(name)
+
+    return jacobian_determinant
+
+
+def create_xi_reference_jacobian_determinant_field(coordinates, name=None):
+    """
+    Calculate the Jacobian determinant w.r.t the 'xi' field.
+    Returns None if the coordinates field is not a valid field.
+    See also :func:create_jacobian_determinant_field.
+    :param coordinates: Geometric coordinate field.
+    :param name: String to set as the name of the field, optional defaults to 'Jacobian_determinant_wrt_xi'.
+    :return: Jacobian determinant field.
+    """
+    jacobian_determinant = None
+    if isinstance(coordinates, Field) and coordinates.isValid():
+        fm = coordinates.getFieldmodule()
+        jacobian_determinant = create_jacobian_determinant_field(coordinates, fm.findFieldByName("xi"), "Jacobian_determinant_wrt_xi" if name is None else name)
+
+    return jacobian_determinant
+
+
 # Create C++ style aliases for names of functions.
 createFieldsDisplacementGradients = create_fields_displacement_gradients
 createFieldsTransformations = create_fields_transformations
