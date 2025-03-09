@@ -1,4 +1,4 @@
-from cmlibs.utils.zinc.finiteelement import get_identifiers, evaluate_field_nodeset_range
+from cmlibs.utils.zinc.finiteelement import evaluate_field_nodeset_range, get_identifiers, get_maximum_node_identifier
 from cmlibs.zinc.field import Field
 from cmlibs.zinc.result import RESULT_OK
 
@@ -10,11 +10,22 @@ def _find_missing(lst):
             for i in range(x + 1, y) if y - x > 1]
 
 
-def convert_nodes_to_datapoints(target_region, source_region):
+def convert_nodes_to_datapoints(target_region, source_region, source_nodeset_type=Field.DOMAIN_TYPE_NODES,
+                                destroy_after_conversion=True):
+    """
+    Transfer nodes from source region to datapoints in target_region, renumbering any existing
+    datapoints in target region to not clash.
+    :param target_region: Zinc Region to read data into. Existing data points are renumbered to avoid nodes.
+    :param source_region: Zinc Region containing nodes to transfer.
+    :param source_nodeset_type:  Set to Field.DOMAIN_TYPE_DATAPOINTS or Field.DOMAIN_TYPE_NODES to transfer datapoints
+    or convert nodes. Datapoint transfer should only be to different regions.
+    :param destroy_after_conversion:  Set to True to destroy nodes that have been successfully converted, or False
+    to leave intact in source_region.
+    """
     source_fieldmodule = source_region.getFieldmodule()
     target_fieldmodule = target_region.getFieldmodule()
     with ChangeManager(source_fieldmodule), ChangeManager(target_fieldmodule):
-        nodes = source_fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+        nodes = source_fieldmodule.findNodesetByFieldDomainType(source_nodeset_type)
         if nodes.getSize() > 0:
             datapoints = target_fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_DATAPOINTS)
             if datapoints.getSize() > 0:
@@ -44,11 +55,28 @@ def convert_nodes_to_datapoints(target_region, source_region):
                     datapoint.setIdentifier(new_identifier)
 
             # transfer nodes as datapoints to target_region
-            buffer = write_to_buffer(source_region, resource_domain_type=Field.DOMAIN_TYPE_NODES)
-            buffer = buffer.replace(bytes("!#nodeset nodes", "utf-8"), bytes("!#nodeset datapoints", "utf-8"))
+            buffer = write_to_buffer(source_region, resource_domain_type=source_nodeset_type)
+            if source_nodeset_type == Field.DOMAIN_TYPE_NODES:
+                buffer = buffer.replace(bytes("!#nodeset nodes", "utf-8"), bytes("!#nodeset datapoints", "utf-8"))
             result = read_from_buffer(target_region, buffer)
             assert result == RESULT_OK, "Failed to load nodes as datapoints"
-            nodes.destroyAllNodes()
+            if destroy_after_conversion:
+                # note this cannot destroy nodes in use by elements
+                nodes.destroyAllNodes()
+
+
+def copy_fitting_data(target_region, source_region):
+    """
+    Copy nodes and data points from source_region to target_region, converting nodes to data points and
+    offsetting data point identifiers to not clash. All groups and fields in use are transferred.
+    This is used for setting up fitting problems where data needs to be in datapoints only.
+    :param target_region: Zinc Region to read nodes/data into.
+    :param source_region: Zinc Region containing nodes/data to transfer. Unmodified.
+    """
+    convert_nodes_to_datapoints(target_region, source_region, source_nodeset_type=Field.DOMAIN_TYPE_DATAPOINTS,
+                                destroy_after_conversion=False)
+    convert_nodes_to_datapoints(target_region, source_region, source_nodeset_type=Field.DOMAIN_TYPE_NODES,
+                                destroy_after_conversion=False)
 
 
 def copy_nodeset(region, nodeset):

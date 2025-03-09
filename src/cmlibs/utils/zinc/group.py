@@ -4,12 +4,17 @@ Utilities for creating and working with Zinc Groups and selection.
 
 from enum import Enum
 
+from cmlibs.utils.zinc.field import get_group_list
 from cmlibs.utils.zinc.finiteelement import evaluate_mesh_centroid, evaluate_nearest_mesh_location, \
     evaluate_field_nodeset_mean
 from cmlibs.utils.zinc.general import ChangeManager, HierarchicalChangeManager
 from cmlibs.zinc.element import Element
 from cmlibs.zinc.field import Field, FieldGroup
 from cmlibs.zinc.result import RESULT_OK
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class GroupOperator(Enum):
@@ -487,3 +492,40 @@ def group_remove_group_local_contents(group, source_group):
                 nodeset_group = group.getNodesetGroup(nodeset)
                 if nodeset_group.isValid() and (nodeset_group.getSize() > 0):
                     nodeset_group.removeNodesConditional(source_group)
+
+
+def match_fitting_group_names(data_fieldmodule, model_fieldmodule, log_diagnostics=False):
+    """
+    Used for fitting problems. Rename any group names in the data fieldmodule that differ only in
+    case and whitespace from any in the model fieldmodule, to the accepted values from the model,
+    which are expected to be lower case without leading or trailing whitespace characters.
+    Note that internal whitespace must be exactly matched.
+    :param data_fieldmodule:  Data Fieldmodule whose group names may be modified.
+    :param model_fieldmodule:  Model Fieldmodule containing preferred group names.
+    :param log_diagnostics:  Set to True to write diagonstic messages about name matches and changes to logging.
+    """
+    # future: match with annotation terms
+    model_names = [group.getName() for group in get_group_list(model_fieldmodule)]
+    for data_group in get_group_list(data_fieldmodule):
+        data_name = data_group.getName()
+        compare_name = data_name.strip().casefold()
+        for model_name in model_names:
+            if model_name == data_name:
+                if log_diagnostics:
+                    logger.info("Data group '" + data_name + "' found in model")
+                break
+            elif model_name.strip().casefold() == compare_name:
+                result = data_group.setName(model_name)
+                if result == RESULT_OK:
+                    if log_diagnostics:
+                        logger.info("Data group '" + data_name + "' found in model as '" +
+                                    model_name + "'. Renaming to match.")
+                else:
+                    logger.error("Error: Data group '" + data_name + "' found in model as '" +
+                          model_name + "'. Renaming to match FAILED.")
+                    if fieldmodule.findFieldByName(model_name).isValid():
+                        logger.error("    Reason: field of that name already exists.")
+                break
+        else:
+            if log_diagnostics:
+                logger.info("Data group '" + data_name + "' not found in model")
