@@ -278,3 +278,18 @@ def undefine_field(field):
             mesh = fm.findMeshByDimension(i)
             mesh_group = mesh
             _undefine_field_on_elements(field, mesh_group)
+
+
+def element_or_ancestor_is_in_mesh(element, mesh):
+    """
+    Query whether element is in mesh or is from its tree of faces, lines etc.
+    :param element: Element to query.
+    :param mesh: Equal or higher dimension ancestor mesh or mesh group to check.
+    :return: True if element or any parent/ancestor is in mesh.
+    """
+    if mesh.containsElement(element):
+        return True
+    for p in range(1, element.getNumberOfParents() + 1):
+        if element_or_ancestor_is_in_mesh(element.getParentElement(p), mesh):
+            return True
+    return False

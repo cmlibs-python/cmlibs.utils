@@ -1,8 +1,9 @@
 import os
 import unittest
+from cmlibs.utils.zinc.field import find_or_create_field_group
 from cmlibs.utils.zinc.group import (
     group_add_group_local_contents, group_evaluate_centroid, group_remove_group_local_contents,
-    group_evaluate_representative_point, groups_have_same_local_contents)
+    group_evaluate_representative_point, groups_have_same_local_contents, match_fitting_group_names)
 from cmlibs.zinc.context import Context
 from cmlibs.zinc.element import Element
 from cmlibs.zinc.field import Field
@@ -134,3 +135,27 @@ class ZincGroupTestCase(unittest.TestCase):
         self.assertEqual(0, group1.getMeshGroup(mesh2d).getSize())
         self.assertEqual(0, group1.getMeshGroup(mesh1d).getSize())
         self.assertEqual(0, group1.getNodesetGroup(nodes).getSize())
+
+
+    def test_match_fitting_group_names(self):
+        """
+        Test utility functions for adding and comparing group local contents.
+        """
+        context = Context("test")
+        model_region = context.createRegion()
+        model_fieldmodule = model_region.getFieldmodule()
+        find_or_create_field_group(model_fieldmodule, "bob", managed=True)
+        find_or_create_field_group(model_fieldmodule, "fred", managed=True)
+        find_or_create_field_group(model_fieldmodule, "two names", managed=True)
+
+        data_region = context.createRegion()
+        data_fieldmodule = data_region.getFieldmodule()
+        data_group_bob = find_or_create_field_group(data_fieldmodule, " Bob")
+        data_group_fred = find_or_create_field_group(data_fieldmodule, "  fRed\t")
+        data_group_two_names = find_or_create_field_group(data_fieldmodule, "\t two NAMES  ")
+
+        match_fitting_group_names(data_fieldmodule, model_fieldmodule, log_diagnostics=True)
+
+        self.assertEqual(data_group_bob.getName(), "bob")
+        self.assertEqual(data_group_fred.getName(), "fred")
+        self.assertEqual(data_group_two_names.getName(), "two names")
