@@ -13,18 +13,21 @@ def _find_missing(lst):
 def convert_nodes_to_datapoints(target_region, source_region, source_nodeset_type=Field.DOMAIN_TYPE_NODES,
                                 destroy_after_conversion=True):
     """
-    Transfer nodes from source region to datapoints in target_region, renumbering any existing
+    Converts nodes in the source region to datapoints in the target region, renumbering any existing
     datapoints in target region to not clash.
+    When the source nodeset type is Field.DOMAIN_TYPE_DATAPOINTS, then datapoints are transferred from the
+    source region to the target region.
     :param target_region: Zinc Region to read data into. Existing data points are renumbered to avoid nodes.
     :param source_region: Zinc Region containing nodes to transfer.
     :param source_nodeset_type:  Set to Field.DOMAIN_TYPE_DATAPOINTS or Field.DOMAIN_TYPE_NODES to transfer datapoints
-    or convert nodes. Datapoint transfer should only be to different regions.
+    or convert nodes. Datapoint transfer should only be to different regions [default: Field.DOMAIN_TYPE_NODES].
     :param destroy_after_conversion:  Set to True to destroy nodes that have been successfully converted, or False
-    to leave intact in source_region.
+    to leave intact in source region [default: True].
     """
     source_fieldmodule = source_region.getFieldmodule()
     target_fieldmodule = target_region.getFieldmodule()
     with ChangeManager(source_fieldmodule), ChangeManager(target_fieldmodule):
+        # Could be nodes or datapoints.
         nodes = source_fieldmodule.findNodesetByFieldDomainType(source_nodeset_type)
         if nodes.getSize() > 0:
             datapoints = target_fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_DATAPOINTS)
@@ -73,10 +76,9 @@ def copy_fitting_data(target_region, source_region):
     :param target_region: Zinc Region to read nodes/data into.
     :param source_region: Zinc Region containing nodes/data to transfer. Unmodified.
     """
-    convert_nodes_to_datapoints(target_region, source_region, source_nodeset_type=Field.DOMAIN_TYPE_DATAPOINTS,
-                                destroy_after_conversion=False)
-    convert_nodes_to_datapoints(target_region, source_region, source_nodeset_type=Field.DOMAIN_TYPE_NODES,
-                                destroy_after_conversion=False)
+    for domain_type in [Field.DOMAIN_TYPE_DATAPOINTS, Field.DOMAIN_TYPE_NODES]:
+        convert_nodes_to_datapoints(target_region, source_region, source_nodeset_type=domain_type,
+                                    destroy_after_conversion=False)
 
 
 def copy_nodeset(region, nodeset):
