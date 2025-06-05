@@ -84,7 +84,6 @@ def project_nodes(region, plane_point, plane_normal, coordinate_field_name='coor
     :param coordinate_field_name: Optional; The name of the field defining the node coordinates.
     :param datapoint_coordinate_field_name: Optional; The name of the field defining the datapoint coordinates, default 'coordinates'.
     """
-
     def _project_fcn(vec, point=True):
         dist = dot(sub(vec, plane_point) if point else vec, plane_normal)
         return sub(vec, mult(plane_normal, dist))
