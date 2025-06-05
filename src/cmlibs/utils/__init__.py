@@ -1,4 +1,6 @@
 import importlib.metadata
 import sys
 
-__version__ = importlib.metadata.version("cmlibs_utils" if sys.version_info < (3, 10) else "cmlibs.utils")
+print("Pytho version:", sys.version)
+print("importlib.metadata version:", importlib.metadata.version("importlib-metadata"))
+__version__ = importlib.metadata.version("cmlibs.utils")
