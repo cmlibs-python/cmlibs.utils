@@ -2,16 +2,18 @@ import importlib.metadata
 import sys
 
 print("Python version:", sys.version)
+xx = ('', 'X.Y.Z')
 try:
-    print("importlib.metadata version:", importlib.metadata.version("importlib.metadata"))
+    xx = ("importlib.metadata version:", importlib.metadata.version("importlib.metadata"))
 except:
     pass
 try:
-    print("importlib-metadata version:", importlib.metadata.version("importlib-metadata"))
+    xx = ("importlib-metadata version:", importlib.metadata.version("importlib-metadata"))
 except:
     pass
 try:
-    print("importlib_metadata version:", importlib.metadata.version("importlib_metadata"))
+    xx = ("importlib_metadata version:", importlib.metadata.version("importlib_metadata"))
 except:
     pass
+print(xx)
 __version__ = importlib.metadata.version("cmlibs.utils")
