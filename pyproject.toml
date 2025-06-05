@@ -10,7 +10,7 @@ name = "cmlibs.utils"
 dynamic = ["version"]
 keywords = ["Utilities", "CMLibs", "Zinc"]
 readme = "README.rst"
-license = {file = "LICENSE"}
+license = "Apache-2.0"
 authors = [
     { name="Hugh Sorby", email="h.sorby@auckland.ac.nz" },
 ]
@@ -22,7 +22,6 @@ description = "Utilities for the CMLibs Zinc library."
 requires-python = ">=3.8"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
 ]
