@@ -709,16 +709,41 @@ def determine_node_field_derivatives(region, coordinates, include_versions=False
     return node_derivative_fields
 
 
-def find_coordinate_fields(region):
+def find_coordinate_fields(region, dimension=None):
+    """
+    Identifies coordinate fields within a given Zinc region.
+
+    A coordinate field is defined as a finite element field that:
+    - Is marked with the type 'coordinate'.
+    - Has a number of components equal to the specified dimension (default is 3).
+
+    If a field named 'coordinates' exists and meets the criteria, it will be placed first in the returned list.
+
+    Parameters:
+        region (Region): The Zinc region to search for coordinate fields.
+        dimension (int, optional): The expected number of components in the coordinate fields. Defaults to 3.
+
+    Returns:
+        List[Field]: A list of matching coordinate fields, with 'coordinates' field first if found.
+    """
+    target_dimension = 3 if dimension is None else dimension
     fm = region.getFieldmodule()
     fi = fm.createFielditerator()
     field = fi.next()
+    coordinate_field = None
     field_list = []
     while field.isValid():
-        if field.isTypeCoordinate() and (field.getNumberOfComponents() == 3) and (field.castFiniteElement().isValid()):
-            field_list.append(field)
+        field = field.castFiniteElement()
+        if field.isValid() and field.isTypeCoordinate() and (field.getNumberOfComponents() == target_dimension):
+            if field.getName() == "coordinates":
+                coordinate_field = field
+            else:
+                field_list.append(field)
 
         field = fi.next()
+
+    if coordinate_field is not None:
+        field_list.insert(0, coordinate_field)
 
     return field_list
 
