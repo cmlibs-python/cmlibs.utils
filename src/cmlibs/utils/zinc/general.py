@@ -6,6 +6,8 @@ import os
 from cmlibs.zinc.context import Context
 from cmlibs.zinc.result import RESULT_OK
 
+from cmlibs.maths.vectorops import normalize, sub, magnitude, dot, mult
+
 
 def is_exf_file(filename):
     if not os.path.isfile(filename):
@@ -166,6 +168,35 @@ def create_node(field_module, data_object, identifier=-1, node_set_name='nodes',
             field.assignReal(field_cache, field_value)
 
     return node.getIdentifier()
+
+
+def rotate_to_next_standard_view(scene_viewer):
+    if scene_viewer is not None:
+        result, eyePosition, lookAtPosition, upVector = scene_viewer.getLookatParameters()
+        upVector = normalize(upVector)
+        viewVector = sub(lookAtPosition, eyePosition)
+        viewDistance = magnitude(viewVector)
+        viewVector = normalize(viewVector)
+        # viewX = dot(viewVector, [1.0, 0.0, 0.0])
+        viewY = dot(viewVector, [0.0, 1.0, 0.0])
+        viewZ = dot(viewVector, [0.0, 0.0, 1.0])
+        # upX = dot(upVector, [1.0, 0.0, 0.0])
+        upY = dot(upVector, [0.0, 1.0, 0.0])
+        upZ = dot(upVector, [0.0, 0.0, 1.0])
+        if (viewZ < -0.999) and (upY > 0.999):
+            # XY -> XZ
+            viewVector = [0.0, 1.0, 0.0]
+            upVector = [0.0, 0.0, 1.0]
+        elif (viewY > 0.999) and (upZ > 0.999):
+            # XZ -> YZ
+            viewVector = [-1.0, 0.0, 0.0]
+            upVector = [0.0, 0.0, 1.0]
+        else:
+            # XY
+            viewVector = [0.0, 0.0, -1.0]
+            upVector = [0.0, 1.0, 0.0]
+        eyePosition = sub(lookAtPosition, mult(viewVector, viewDistance))
+        scene_viewer.setLookatParametersNonSkew(eyePosition, lookAtPosition, upVector)
 
 
 defineStandardGraphicsObjects = define_standard_graphics_objects
