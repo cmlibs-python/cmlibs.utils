@@ -4,7 +4,7 @@ import unittest
 from cmlibs.utils.zinc.finiteelement import define_grid_field_on_mesh
 from cmlibs.zinc.context import Context
 from cmlibs.zinc.result import RESULT_OK
-from .utilities import assert_almost_equal_list, get_test_resource_name
+from utilities import assert_almost_equal_list, get_test_resource_name
 
 
 class ZincFiniteElementTestCase(unittest.TestCase):
