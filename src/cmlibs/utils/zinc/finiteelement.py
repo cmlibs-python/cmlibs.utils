@@ -660,6 +660,68 @@ def get_scalar_field_minimum_in_mesh(real_field, mesh=None):
     return minimum_element_id, minimum_element_value
 
 
+def define_grid_field_on_mesh(mesh, field_name, number_of_cells, number_of_components=1, value_type=float):
+    """
+    Define a grid field over all elements of a mesh. This is an embedded structured mesh of sub-cells over
+    the element space. Supports cube, square or line shape. Supports only trilinear grid cells.
+    This can add to an existing grid field provided the field is defined identically.
+    New field has zero values.
+    :param mesh: Mesh to define grid field on.
+    :param field_name: Name of grid field to define.
+    :param number_of_cells: List giving number of sub-cells in each element direction. If fewer values
+    than the mesh dimension are supplied, the last number of cells is used for remaining directions.
+    :param number_of_components: Number of components of grid field.
+    :param value_type: float or int.
+    """
+    number_count = len(number_of_cells)
+    assert number_count > 0
+    assert all((number >= 1) for number in number_of_cells)
+    assert number_of_components >= 1
+    assert value_type in (float, int)
+    mesh_dimension = mesh.getDimension()
+    face_mesh_string = "" if (mesh_dimension == 1) else f", face mesh=mesh{mesh_dimension - 1}d"
+    number_in_xi = []
+    number_in_xi_strings = []
+    for d in range(mesh_dimension):
+        number_in_xi.append(number_of_cells[d if (d < number_count) else -1])
+        number_in_xi_strings.append(f" #xi{d + 1}={number_in_xi[d]}")
+    number_in_xi_string = ",".join(number_in_xi_strings)
+    value_type_string = "integer" if (value_type is int) else "real"
+    basis_string = "*".join(["l.Lagrange"] * mesh_dimension)
+    components_string = ""
+    for c in range(number_of_components):
+        components_string += f" {c + 1}. {basis_string}, no modify, grid based.\n" + number_in_xi_string + "\n"
+    header_string = \
+f"""EX Version: 3
+Region: /
+!#mesh mesh{mesh_dimension}d, dimension={mesh_dimension}{face_mesh_string}, nodeset=nodes
+Define element template: element1
+Shape. Dimension={mesh_dimension}, {"*".join(["line"] * mesh_dimension)}
+#Scale factor sets=0
+#Nodes=0
+#Fields=1
+1) {field_name}, field, {value_type_string}, #Components={number_of_components}
+{components_string}Element template: element1
+"""
+    higher_number_in_xi = number_of_components
+    for d in range(1, mesh_dimension):
+        higher_number_in_xi *= (number_in_xi[d] + 1)
+    values_string = "Values:\n" + (" 0" * (number_in_xi[0] + 1) + "\n") * higher_number_in_xi
+    ex_strings = [header_string]
+    elementiterator = mesh.createElementiterator()
+    element = elementiterator.next()
+    while element.isValid():
+        element_string = "Element: " + str(element.getIdentifier()) + "\n" + values_string
+        ex_strings.append(element_string)
+        element = elementiterator.next()
+    ex_string = "".join(ex_strings)
+    region = mesh.getFieldmodule().getRegion()
+    sir = region.createStreaminformationRegion()
+    sir.createStreamresourceMemoryBuffer(ex_string)
+    result = region.read(sir)
+    assert result == RESULT_OK
+
+
 createCubeElement = create_cube_element
 createSquareElement = create_square_element
 createLineElement = create_line_element
