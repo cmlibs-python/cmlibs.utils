@@ -335,16 +335,18 @@ class ZincRegionTestCase(unittest.TestCase):
         field_count = 0
         while field.isValid():
             field_count += 1
-            print('b4:', field.getName())
-            field = fi.next()
-
-        fi = source_fieldmodule.createFielditerator()
-        field = fi.next()
-        while field.isValid():
-            print('src:', field.getName())
             field = fi.next()
 
         self.assertEqual(0, field_count)
+
+        fi = source_fieldmodule.createFielditerator()
+        field = fi.next()
+        src_field_count = 0
+        while field.isValid():
+            src_field_count += 1
+            field = fi.next()
+
+        self.assertEqual(6, src_field_count)
 
         convert_nodes_to_datapoints(target_region, source_region, source_nodeset_type=Field.DOMAIN_TYPE_DATAPOINTS, field_names=['group_1', 'coordinates'])
 
@@ -353,10 +355,11 @@ class ZincRegionTestCase(unittest.TestCase):
         field_count = 0
         while field.isValid():
             field_count += 1
-            print('a4:', field.getName())
             field = fi.next()
 
-        self.assertEqual(2, field_count)
+        # Group fields do not get dropped by the stream information region field restriction.
+        # This means we only lose the 'alt_coordinates' field from the source region.
+        self.assertEqual(5, field_count)
 
 
 
