@@ -4,7 +4,7 @@ import hashlib
 # Source - https://stackoverflow.com/a/44873382
 # Posted by maxschlepzig, modified by community. See post 'Timeline' for change history
 # Retrieved 2026-07-30, License - CC BY-SA 4.0
-def sha256sum(filename):
+def sha256sum_old(filename):
     h = hashlib.sha256()
     b = bytearray(1024 * 1024)
     mv = memoryview(b)
@@ -14,7 +14,7 @@ def sha256sum(filename):
     return h.hexdigest()
 import hashlib
 
-def sha256sum_normalized(filename, normalize=True):
+def sha256sum(filename, normalize=True):
     """
     An efficient file hashing utility that avoids line-ending issues.
 
