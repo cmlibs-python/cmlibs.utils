@@ -11,18 +11,19 @@ def _find_missing(lst):
 
 
 def convert_nodes_to_datapoints(target_region, source_region, source_nodeset_type=Field.DOMAIN_TYPE_NODES,
-                                destroy_after_conversion=True):
+                                destroy_after_conversion=True, field_names=None):
     """
+    When the source nodeset type is Field.DOMAIN_TYPE_DATAPOINTS, then datapoints are transferred from the
     Converts nodes in the source region to datapoints in the target region, renumbering any existing
     datapoints in target region to not clash.
-    When the source nodeset type is Field.DOMAIN_TYPE_DATAPOINTS, then datapoints are transferred from the
     source region to the target region.
     :param target_region: Zinc Region to read data into. Existing data points are renumbered to avoid nodes.
     :param source_region: Zinc Region containing nodes to transfer.
-    :param source_nodeset_type:  Set to Field.DOMAIN_TYPE_DATAPOINTS or Field.DOMAIN_TYPE_NODES to transfer datapoints
+    :param source_nodeset_type: Set to Field.DOMAIN_TYPE_DATAPOINTS or Field.DOMAIN_TYPE_NODES to transfer datapoints
     or convert nodes. Datapoint transfer should only be to different regions [default: Field.DOMAIN_TYPE_NODES].
-    :param destroy_after_conversion:  Set to True to destroy nodes that have been successfully converted, or False
+    :param destroy_after_conversion: Set to True to destroy nodes that have been successfully converted, or False
     to leave intact in source region [default: True].
+    :param field_names: A list of field names to output.
     """
     source_fieldmodule = source_region.getFieldmodule()
     target_fieldmodule = target_region.getFieldmodule()
@@ -46,11 +47,14 @@ def convert_nodes_to_datapoints(target_region, source_region, source_nodeset_typ
                     datapoint_identifier = datapoint.getIdentifier()
                     if datapoint_identifier in existing_nodes_identifiers_set and len(available_identifiers):
                         next_identifier = available_identifiers.pop(0)
+                    elif datapoint_identifier not in existing_nodes_identifiers_set:
+                        next_identifier = datapoint_identifier
                     else:
                         max_identifier += 1
                         next_identifier = max_identifier
 
-                    identifier_map[datapoint_identifier] = next_identifier
+                    if next_identifier != datapoint_identifier:
+                        identifier_map[datapoint_identifier] = next_identifier
                     datapoint = datapoint_iterator.next()
 
                 for current_identifier, new_identifier in identifier_map.items():
@@ -58,7 +62,7 @@ def convert_nodes_to_datapoints(target_region, source_region, source_nodeset_typ
                     datapoint.setIdentifier(new_identifier)
 
             # transfer nodes as datapoints to target_region
-            buffer = write_to_buffer(source_region, resource_domain_type=source_nodeset_type)
+            buffer = write_to_buffer(source_region, resource_domain_type=source_nodeset_type, field_names=field_names)
             if source_nodeset_type == Field.DOMAIN_TYPE_NODES:
                 buffer = buffer.replace(bytes("!#nodeset nodes", "utf-8"), bytes("!#nodeset datapoints", "utf-8"))
             result = read_from_buffer(target_region, buffer)
@@ -68,17 +72,18 @@ def convert_nodes_to_datapoints(target_region, source_region, source_nodeset_typ
                 nodes.destroyAllNodes()
 
 
-def copy_fitting_data(target_region, source_region):
+def copy_fitting_data(target_region, source_region, field_names=None):
     """
     Copy nodes and data points from source_region to target_region, converting nodes to data points and
     offsetting data point identifiers to not clash. All groups and fields in use are transferred.
     This is used for setting up fitting problems where data needs to be in datapoints only.
     :param target_region: Zinc Region to read nodes/data into.
     :param source_region: Zinc Region containing nodes/data to transfer. Unmodified.
+    :param field_names: A list of field names to output.
     """
     for domain_type in [Field.DOMAIN_TYPE_DATAPOINTS, Field.DOMAIN_TYPE_NODES]:
         convert_nodes_to_datapoints(target_region, source_region, source_nodeset_type=domain_type,
-                                    destroy_after_conversion=False)
+                                    destroy_after_conversion=False, field_names=field_names)
 
 
 def copy_nodeset(region, nodeset):

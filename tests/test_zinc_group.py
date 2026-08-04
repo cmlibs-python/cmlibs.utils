@@ -1,4 +1,3 @@
-import os
 import unittest
 from cmlibs.utils.zinc.field import find_or_create_field_group
 from cmlibs.utils.zinc.group import (
@@ -8,6 +7,7 @@ from cmlibs.zinc.context import Context
 from cmlibs.zinc.element import Element
 from cmlibs.zinc.field import Field
 from cmlibs.zinc.result import RESULT_OK
+
 from utilities import assert_almost_equal_list, get_test_resource_name
 
 
@@ -136,7 +136,6 @@ class ZincGroupTestCase(unittest.TestCase):
         self.assertEqual(0, group1.getMeshGroup(mesh1d).getSize())
         self.assertEqual(0, group1.getNodesetGroup(nodes).getSize())
 
-
     def test_match_fitting_group_names(self):
         """
         Test utility functions for adding and comparing group local contents.
@@ -154,8 +153,36 @@ class ZincGroupTestCase(unittest.TestCase):
         data_group_fred = find_or_create_field_group(data_fieldmodule, "  fRed\t")
         data_group_two_names = find_or_create_field_group(data_fieldmodule, "\t two NAMES  ")
 
-        match_fitting_group_names(data_fieldmodule, model_fieldmodule, log_diagnostics=True)
-
+        names = match_fitting_group_names(data_fieldmodule, model_fieldmodule, log_diagnostics=True)
         self.assertEqual(data_group_bob.getName(), "bob")
         self.assertEqual(data_group_fred.getName(), "fred")
         self.assertEqual(data_group_two_names.getName(), "two names")
+        self.assertIn("two names", names)
+        self.assertEqual(names["two names"], ('\t two NAMES  ', 'two names'))
+        self.assertIn("bob", names)
+        self.assertEqual(names["bob"], (' Bob', 'bob'))
+
+    def test_match_fitting_group_names_cap(self):
+        """
+        Test utility functions for adding and comparing group local contents.
+        """
+        context = Context("test")
+        model_region = context.createRegion()
+        model_fieldmodule = model_region.getFieldmodule()
+        find_or_create_field_group(model_fieldmodule, "Bob", managed=True)
+        find_or_create_field_group(model_fieldmodule, "fRed", managed=True)
+        find_or_create_field_group(model_fieldmodule, "james", managed=True)
+
+        data_region = context.createRegion()
+        data_fieldmodule = data_region.getFieldmodule()
+        data_group_bob = find_or_create_field_group(data_fieldmodule, "bob")
+        data_group_fred = find_or_create_field_group(data_fieldmodule, "fred")
+        find_or_create_field_group(data_fieldmodule, "james")
+
+        names = match_fitting_group_names(data_fieldmodule, model_fieldmodule, log_diagnostics=True)
+        self.assertEqual(data_group_bob.getName(), "Bob")
+        self.assertEqual(data_group_fred.getName(), "fRed")
+        self.assertIn("Bob", names)
+        self.assertEqual(names["Bob"], ('bob', 'bob'))
+        self.assertIn("james", names)
+        self.assertEqual(names["james"], ('james', None))

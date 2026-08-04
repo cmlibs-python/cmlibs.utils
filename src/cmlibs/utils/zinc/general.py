@@ -124,7 +124,7 @@ def create_node(field_module, data_object, identifier=-1, node_set_name='nodes',
     """
     Create a Node in the field_module using the data_object.  The data object must supply a 'get_field_names' method
     and a 'get_time_sequence' method.  Derive a node data object from the 'AbstractNodeDataObject' class to ensure
-    that the data object class meets it's requirements.
+    that the data object class meets its requirements.
 
     Optionally use the identifier to set the identifier of the Node created, the time parameter to set
     the time value in the cache, or the node_set_name to specify which node set to use the default node set
@@ -162,6 +162,7 @@ def create_node(field_module, data_object, identifier=-1, node_set_name='nodes',
     for i, field in enumerate(fields):
         field_name = field_names[i]
         field_value = getattr(data_object, field_name)()
+        # print(field_name, type(field_value), field_value, isinstance(field_value, ("".__class__, u"".__class__)))
         if isinstance(field_value, ("".__class__, u"".__class__)):
             field.assignString(field_cache, field_value)
         else:

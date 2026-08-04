@@ -503,20 +503,25 @@ def match_fitting_group_names(data_fieldmodule, model_fieldmodule, log_diagnosti
     :param data_fieldmodule:  Data Fieldmodule whose group names may be modified.
     :param model_fieldmodule:  Model Fieldmodule containing preferred group names.
     :param log_diagnostics:  Set to True to write diagonstic messages about name matches and changes to logging.
+    :return: A dictionary of matched group names.
     """
     # future: match with annotation terms
     model_names = [group.getName() for group in get_group_list(model_fieldmodule)]
+    matched_names = {}
     for data_group in get_group_list(data_fieldmodule):
         data_name = data_group.getName()
         compare_name = data_name.strip().casefold()
         for model_name in model_names:
+            # print('comparing "%s" to "%s" or "%s"' % (data_name, model_name, compare_name))
             if model_name == data_name:
+                matched_names[model_name] = (data_name, None)
                 if log_diagnostics:
                     logger.info("Data group '" + data_name + "' found in model")
                 break
             elif model_name.strip().casefold() == compare_name:
                 result = data_group.setName(model_name)
                 if result == RESULT_OK:
+                    matched_names[model_name] = (data_name, compare_name)
                     if log_diagnostics:
                         logger.info("Data group '" + data_name + "' found in model as '" +
                                     model_name + "'. Renaming to match.")
@@ -527,5 +532,8 @@ def match_fitting_group_names(data_fieldmodule, model_fieldmodule, log_diagnosti
                         logger.error("    Reason: field of that name already exists.")
                 break
         else:
+            # print('Data group "' + data_name + '" not found in model')
             if log_diagnostics:
                 logger.info("Data group '" + data_name + "' not found in model")
+
+    return matched_names

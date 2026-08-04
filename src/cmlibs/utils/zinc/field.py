@@ -554,7 +554,7 @@ def create_field_stored_mesh_location(fieldmodule: Fieldmodule, mesh: Mesh, name
 
     :param fieldmodule:  Zinc fieldmodule to find or create field in.
     :param mesh:  Mesh to store locations in, from same fieldmodule.
-    :param name:  Name of new field. If not defined, defaults to "location\_" + mesh.getName().
+    :param name:  Name of new field. If not defined, defaults to "location_" + mesh.getName().
     :param managed: Managed state of field.
     :return: Zinc FieldStoredMeshLocation
     """
@@ -576,7 +576,7 @@ def find_or_create_field_stored_mesh_location(fieldmodule: Fieldmodule, mesh: Me
 
     :param fieldmodule:  Zinc fieldmodule to find or create field in.
     :param mesh:  Mesh to store locations in, from same fieldmodule.
-    :param name:  Name of new field. If not defined, defaults to "location\_" + mesh.getName().
+    :param name:  Name of new field. If not defined, defaults to "location_" + mesh.getName().
     :param managed: Managed state of field if created here.
     """
     if not name:
