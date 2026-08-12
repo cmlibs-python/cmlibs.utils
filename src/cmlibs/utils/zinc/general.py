@@ -28,9 +28,9 @@ class AbstractNodeDataObject(object):
         self._field_names = field_names
         self._time_sequence = time_sequence if time_sequence else []
         self._time_sequence_field_names = time_sequence_field_names if time_sequence_field_names else []
-        self._check_field_names()
+        # self._check_field_names()
 
-    def _check_field_names(self):
+    def check_field_names(self):
         for field_name in self._field_names:
             if not hasattr(self, field_name):
                 raise NotImplementedError('Missing data method for field: %s' % field_name)
@@ -40,7 +40,7 @@ class AbstractNodeDataObject(object):
 
     def set_field_names(self, field_names):
         self._field_names = field_names
-        self._check_field_names()
+        self.check_field_names()
 
     def get_time_sequence(self):
         return self._time_sequence
@@ -141,6 +141,7 @@ def create_node(field_module, data_object, identifier=-1, node_set_name='nodes',
     node_set = field_module.findNodesetByName(node_set_name)
     node_template = node_set.createNodetemplate()
 
+    data_object.check_field_names()
     # Set the finite element coordinate field for the nodes to use
     fields = []
     field_names = data_object.get_field_names()

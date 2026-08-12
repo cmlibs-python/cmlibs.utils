@@ -1,10 +1,14 @@
 import math
 import unittest
 
-from cmlibs.utils.zinc.finiteelement import define_grid_field_on_mesh
+from cmlibs.utils.zinc.finiteelement import define_grid_field_on_mesh, create_element_from_node_identifiers
 from cmlibs.zinc.context import Context
 from cmlibs.zinc.result import RESULT_OK
-from utilities import assert_almost_equal_list, get_test_resource_name
+
+try:
+    from utilities import assert_almost_equal_list, get_test_resource_name
+except ImportError:
+    from .utilities import assert_almost_equal_list, get_test_resource_name
 
 
 class ZincFiniteElementTestCase(unittest.TestCase):
@@ -241,6 +245,24 @@ class ZincFiniteElementTestCase(unittest.TestCase):
                         result, grid_x = grid_coordinates.evaluateReal(fieldcache, 3)
                         self.assertTrue(result == RESULT_OK)
                         assert_almost_equal_list(self, x, grid_x, delta=1.0E-8)
+
+    def test_create_element_from_node_identifiers(self):
+        exf_file = get_test_resource_name('warped_two_element_cube.exf')
+
+        context = Context("test")
+        region = context.createRegion()
+        result = region.readFile(exf_file)
+        self.assertTrue(result == RESULT_OK)
+
+        fm = region.getFieldmodule()
+        mesh = fm.findMeshByDimension(1)
+        coordinates_field = fm.findFieldByName("coordinates")
+
+        element_identifier = create_element_from_node_identifiers(mesh, coordinates_field, [1, 2])
+        self.assertEqual(21, element_identifier)
+
+        element_identifier = create_element_from_node_identifiers(mesh, coordinates_field, [134, 516])
+        self.assertEqual(22, element_identifier)
 
 
 if __name__ == "__main__":
