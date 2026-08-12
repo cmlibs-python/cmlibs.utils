@@ -120,17 +120,17 @@ def create_line_element(mesh: Mesh, finite_element_field: Field, node_coordinate
     assert mesh.getDimension() == 1
     assert finite_element_field.castFiniteElement().isValid()
     assert len(node_coordinate_set) == 2
-    fieldmodule = finite_element_field.getFieldmodule()
-    nodeset = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+    field_module = finite_element_field.getFieldmodule()
+    nodeset = field_module.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
     node_template = nodeset.createNodetemplate()
     node_template.defineField(finite_element_field)
     element_template = mesh.createElementtemplate()
     element_template.setElementShapeType(Element.SHAPE_TYPE_LINE)
-    linear_basis = fieldmodule.createElementbasis(1, Elementbasis.FUNCTION_TYPE_LINEAR_LAGRANGE)
+    linear_basis = field_module.createElementbasis(1, Elementbasis.FUNCTION_TYPE_LINEAR_LAGRANGE)
     eft = mesh.createElementfieldtemplate(linear_basis)
     element_template.defineField(finite_element_field, -1, eft)
-    field_cache = fieldmodule.createFieldcache()
-    with ChangeManager(fieldmodule):
+    field_cache = field_module.createFieldcache()
+    with ChangeManager(field_module):
         node_identifiers = []
         for node_coordinate in node_coordinate_set:
             node = nodeset.createNode(-1, node_template)
@@ -139,6 +139,45 @@ def create_line_element(mesh: Mesh, finite_element_field: Field, node_coordinate
             finite_element_field.assignReal(field_cache, node_coordinate)
         element = mesh.createElement(-1, element_template)
         element.setNodesByIdentifier(eft, node_identifiers)
+
+    return element.getIdentifier()
+
+
+def create_element_from_node_identifiers(
+        mesh,
+        finite_element_field,
+        node_identifiers,
+        element_basis=Elementbasis.FUNCTION_TYPE_LINEAR_LAGRANGE,
+        element_shape_type=Element.SHAPE_TYPE_LINE):
+    """
+    Create an element from a list of node identifiers.
+
+    Raises an exception if the combination of the element basis and element shape type is not implemented.
+
+    :param mesh: The Zinc Mesh to create element in.
+    :param finite_element_field:  Zinc FieldFiniteElement to use in element template.
+    :param node_identifiers: The node identifiers to create element from.
+    :param element_basis: The element basis to create element from.
+    :param element_shape_type: The element shape to create element from.
+
+    :return: Element identifier.
+    """
+    if element_basis != Elementbasis.FUNCTION_TYPE_LINEAR_LAGRANGE:
+        raise NotImplementedError("Only LINEAR LAGRANGE elements are supported")
+
+    if element_shape_type != Element.SHAPE_TYPE_LINE:
+        raise NotImplementedError("Only line type elements are supported")
+
+    field_module = mesh.getFieldmodule()
+    element_template = mesh.createElementtemplate()
+    element_template.setElementShapeType(Element.SHAPE_TYPE_LINE)
+    linear_basis = field_module.createElementbasis(1, Elementbasis.FUNCTION_TYPE_LINEAR_LAGRANGE)
+    eft = mesh.createElementfieldtemplate(linear_basis)
+    element_template.defineField(finite_element_field, -1, eft)
+    element = mesh.createElement(-1, element_template)
+    element.setNodesByIdentifier(eft, node_identifiers)
+
+    return element.getIdentifier()
 
 
 def find_node_with_name(nodeset: Nodeset, name_field: Field, name: str, ignore_case=False, strip_whitespace=False):
