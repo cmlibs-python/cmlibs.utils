@@ -536,6 +536,37 @@ def get_element_node_identifiers_basis_order(element: Element, eft: Elementfield
     return node_identifiers
 
 
+def get_mesh_element_node_identifiers_maps(mesh, field):
+    """
+    Get maps from element id to node ids in basis order, and node ids to element ids for mesh,
+    as used by the supplied field. Duplicate node ids are first removed from element node id lists.
+    Requires all components to have the same element field template.
+    Useful for getting element connectivity for 1-D meshes.
+    :param mesh: Mesh or mesh group to get element <--> node maps for.
+    :param field: Field to get mappings for.
+    :return: element_id_to_node_ids, node_id_to_element_ids
+    """
+    element_id_to_node_ids = {}
+    node_id_to_element_ids = {}
+    element_iter = mesh.createElementiterator()
+    element = element_iter.next()
+    while element.isValid():
+        element_id = element.getIdentifier()
+        eft = element.getElementfieldtemplate(field, -1)
+        node_ids = get_element_node_identifiers_basis_order(element, eft)
+        # remove duplicate node identifiers
+        node_ids = list(dict.fromkeys(node_ids))
+        element_id_to_node_ids[element_id] = node_ids
+        for node_id in node_ids:
+            element_ids = node_id_to_element_ids.get(node_id)
+            if element_ids:
+                element_ids.append(element_id)
+            else:
+                node_id_to_element_ids[node_id] = [element_id]
+        element = element_iter.next()
+    return element_id_to_node_ids, node_id_to_element_ids
+
+
 def get_highest_dimension_mesh(fieldmodule: Fieldmodule):
     """
     Get highest dimension non-empty mesh in Zinc fieldmodule.
