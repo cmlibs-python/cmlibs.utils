@@ -4,6 +4,9 @@ Utilities for creating and working with Zinc Finite Elements.
 import math
 
 from cmlibs.maths import vectorops
+from cmlibs.utils.zinc.field import (
+    find_or_create_field_coordinates, find_or_create_field_finite_element, find_or_create_field_group,
+    find_or_create_field_stored_string)
 from cmlibs.utils.zinc.general import ChangeManager
 from cmlibs.zinc.element import Element, Elementbasis, Elementfieldtemplate, Mesh
 from cmlibs.zinc.field import Field, FieldFindMeshLocation
@@ -533,6 +536,37 @@ def get_element_node_identifiers_basis_order(element: Element, eft: Elementfield
     return node_identifiers
 
 
+def get_mesh_element_node_identifiers_maps(mesh, field):
+    """
+    Get maps from element id to node ids in basis order, and node ids to element ids for mesh,
+    as used by the supplied field. Duplicate node ids are first removed from element node id lists.
+    Requires all components to have the same element field template.
+    Useful for getting element connectivity for 1-D meshes.
+    :param mesh: Mesh or mesh group to get element <--> node maps for.
+    :param field: Field to get mappings for.
+    :return: element_id_to_node_ids, node_id_to_element_ids
+    """
+    element_id_to_node_ids = {}
+    node_id_to_element_ids = {}
+    element_iter = mesh.createElementiterator()
+    element = element_iter.next()
+    while element.isValid():
+        element_id = element.getIdentifier()
+        eft = element.getElementfieldtemplate(field, -1)
+        node_ids = get_element_node_identifiers_basis_order(element, eft)
+        # remove duplicate node identifiers
+        node_ids = list(dict.fromkeys(node_ids))
+        element_id_to_node_ids[element_id] = node_ids
+        for node_id in node_ids:
+            element_ids = node_id_to_element_ids.get(node_id)
+            if element_ids:
+                element_ids.append(element_id)
+            else:
+                node_id_to_element_ids[node_id] = [element_id]
+        element = element_iter.next()
+    return element_id_to_node_ids, node_id_to_element_ids
+
+
 def get_highest_dimension_mesh(fieldmodule: Fieldmodule):
     """
     Get highest dimension non-empty mesh in Zinc fieldmodule.
@@ -759,6 +793,118 @@ Shape. Dimension={mesh_dimension}, {"*".join(["line"] * mesh_dimension)}
     sir.createStreamresourceMemoryBuffer(ex_string)
     result = region.read(sir)
     assert result == RESULT_OK
+
+
+def create_hermite_curve_elements(mesh, nx, nd1, loop=False, start_node_identifier=None, start_element_identifier=None,
+                                  coordinate_field_name="coordinates"):
+    """
+    Generate a continuous 1-D mesh interpolated with cubic Hermite basis from the supplied coordinates and derivatives.
+    :param mesh: 1-D mesh or mesh group to define 1-D elements in. Nodes are added to the associated nodeset or
+    nodeset group.
+    :param nx: Coordinates along curve.
+    :param nd1: Derivatives along curve.
+    :param loop: True if curve loops back to first point, False if not.
+    :param start_node_identifier: Optional first node identifier to use.
+    :param start_element_identifier: Optional first 1D element identifier to use.
+    :param coordinate_field_name: Optional name of coordinate field to define, if omitted use "coordinates".
+    :return: next node identifier, next 1D element identifier
+    """
+    assert mesh.getDimension() == 1
+    fieldmodule = mesh.getFieldmodule()
+    # future, when supported: nodes = mesh.getMasterNodeset(), or mesh.getOrCreateNodeset() to replace following
+    nodes = fieldmodule.findNodesetByFieldDomainType(Field.DOMAIN_TYPE_NODES)
+    mesh_group = mesh.castGroup()
+    if mesh_group.isValid():
+        group = mesh_group.getFieldGroup()
+        nodes = group.getOrCreateNodesetGroup(nodes)
+    else:
+        group = None
+    with ChangeManager(fieldmodule):
+        coordinates = find_or_create_field_coordinates(fieldmodule, name=coordinate_field_name)
+        node_identifier = start_node_identifier if start_node_identifier is not None else \
+            max(get_maximum_node_identifier(nodes), 0) + 1
+
+        nodetemplate = nodes.createNodetemplate()
+        nodetemplate.defineField(coordinates)
+        nodetemplate.setValueNumberOfVersions(coordinates, -1, Node.VALUE_LABEL_D_DS1, 1)
+
+        element_identifier = start_element_identifier if start_element_identifier is not None else \
+            max(get_maximum_element_identifier(mesh), 0) + 1
+        elementtemplate = mesh.createElementtemplate()
+        elementtemplate.setElementShapeType(Element.SHAPE_TYPE_LINE)
+        cubicHermiteBasis = fieldmodule.createElementbasis(
+            1, Elementbasis.FUNCTION_TYPE_CUBIC_HERMITE)
+        eft = mesh.createElementfieldtemplate(cubicHermiteBasis)
+        elementtemplate.defineField(coordinates, -1, eft)
+
+        fieldcache = fieldmodule.createFieldcache()
+        nids = []
+        nCount = len(nx)
+        for n in range(nCount):
+            node = nodes.createNode(node_identifier, nodetemplate)
+            nids.append(node_identifier)
+            fieldcache.setNode(node)
+            coordinates.setNodeParameters(fieldcache, -1, Node.VALUE_LABEL_VALUE, 1, nx[n])
+            coordinates.setNodeParameters(fieldcache, -1, Node.VALUE_LABEL_D_DS1, 1, nd1[n])
+            node_identifier += 1
+        eCount = nCount if loop else nCount - 1
+        if loop:
+            nids.append(nids[0])
+        for e in range(eCount):
+            element = mesh.createElement(element_identifier, elementtemplate)
+            element.setNodesByIdentifier(eft, nids[e:e + 2])
+            element_identifier += 1
+
+    return node_identifier, element_identifier
+
+
+def create_node_points(nodeset, px, start_node_identifier=None,
+                         coordinate_field_name="coordinates", field_names_and_values=[]):
+    """
+    Create a set of nodes or datapoints.
+    :param nodeset: Nodeset or nodeset group to create nodes in.
+    :param px: Coordinates of points.
+    :param start_data_identifier: Optional first node identifier to use.
+    :param coordinate_field_name: Optional name of coordinate field to define, if omitted use "coordinates".
+    :param field_names_and_values: Optional lists of (field_name, list of values) for additional fields to
+    define on the datapoints. Values may be scalar or vector (list of lists) real, or string.
+    Must be the same number of values as the number of points.
+    :return: next available node identifier
+    """
+    fieldmodule = nodeset.getFieldmodule()
+    with ChangeManager(fieldmodule):
+        coordinates = find_or_create_field_coordinates(fieldmodule, name=coordinate_field_name)
+
+        master_nodeset = nodeset.getMasterNodeset()
+        node_identifier = start_node_identifier if start_node_identifier is not None else \
+            max(get_maximum_node_identifier(master_nodeset), 0) + 1
+
+        nodetemplate = master_nodeset.createNodetemplate()
+        nodetemplate.defineField(coordinates)
+        fields_values = []  # (field, is_string, values)
+        for field_name, field_values in field_names_and_values:
+            is_string = isinstance(field_values[0], str)
+            if is_string:
+                field = find_or_create_field_stored_string(fieldmodule, field_name, managed=True)
+            else:
+                components_count = len(field_values[0]) if isinstance(field_values[0], list) else 1
+                field = find_or_create_field_finite_element(fieldmodule, field_name, components_count, managed=True)
+            nodetemplate.defineField(field)
+            fields_values.append((field, is_string, field_values))
+
+        fieldcache = fieldmodule.createFieldcache()
+        for n, x in enumerate(px):
+            node = nodeset.createNode(node_identifier, nodetemplate)
+            fieldcache.setNode(node)
+            coordinates.setNodeParameters(fieldcache, -1, Node.VALUE_LABEL_VALUE, 1, x)
+            for field, is_string, values in fields_values:
+                if is_string:
+                    field.assignString(fieldcache, values[n])
+                else:
+                    field.setNodeParameters(fieldcache, -1, Node.VALUE_LABEL_VALUE, 1, values[n])
+            node_identifier += 1
+
+    return node_identifier
 
 
 createCubeElement = create_cube_element

@@ -4,8 +4,11 @@ import unittest
 from cmlibs.utils.zinc.field import find_or_create_field_coordinates
 from cmlibs.utils.zinc.finiteelement import create_nodes
 from cmlibs.utils.zinc.region import convert_nodes_to_datapoints, copy_nodeset
+from cmlibs.utils.zinc.regionbufferio import region_read_from_buffer, region_write_to_buffer
 from cmlibs.zinc.context import Context
 from cmlibs.zinc.field import Field
+from cmlibs.zinc.result import RESULT_OK
+from cmlibs.zinc.streamregion import StreaminformationRegion
 
 
 class ZincRegionTestCase(unittest.TestCase):
@@ -361,6 +364,35 @@ class ZincRegionTestCase(unittest.TestCase):
         # This means we only lose the 'alt_coordinates' field from the source region.
         self.assertEqual(5, field_count)
 
+    def test_read_write_buffer_recursion_mode(self):
+        context = Context("test")
+        region = context.createRegion()
+        buffer = b"EX Version: 3\nRegion: /\nGroup name: bob\nRegion: /fred\nRegion: /joe\n"
+        result = region_read_from_buffer(region, buffer)
+        self.assertEqual(result, RESULT_OK)
+        fieldmodule = region.getFieldmodule()
+        bob = fieldmodule.findFieldByName("bob").castGroup()
+        self.assertTrue(bob.isValid())
+        fred = region.findChildByName("fred")
+        self.assertTrue(fred.isValid())
+        joe = region.findChildByName("joe")
+        self.assertTrue(joe.isValid())
+        buffer2 = region_write_to_buffer(region, recursion_mode=StreaminformationRegion.RECURSION_MODE_ON)
+        self.assertTrue(buffer2 is not None)
+        self.assertEqual(buffer2, buffer)
+        buffer3 = region_write_to_buffer(region, recursion_mode=StreaminformationRegion.RECURSION_MODE_OFF)
+        self.assertTrue(buffer3 is not None)
+        if b"EX Version 3" in buffer3:
+            self.assertEqual(buffer3, b"EX Version: 3\nRegion: /\n")
+        result = region_read_from_buffer(fred, buffer3)
+        self.assertEqual(result, RESULT_OK)
+        fieldmodule2 = fred.getFieldmodule()
+        bob2 = fieldmodule2.findFieldByName("bob").castGroup()
+        self.assertFalse(bob2.isValid())
+        fred2 = fred.findChildByName("fred")
+        self.assertFalse(fred2.isValid())
+        joe2 = fred.findChildByName("joe")
+        self.assertFalse(joe2.isValid())
 
 
 if __name__ == "__main__":

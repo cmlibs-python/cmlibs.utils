@@ -1,4 +1,6 @@
 from cmlibs.utils.zinc.finiteelement import evaluate_field_nodeset_range, get_identifiers, get_maximum_node_identifier
+from cmlibs.utils.zinc.regionbufferio import (
+    region_read_from_buffer as read_from_buffer, region_write_to_buffer as write_to_buffer)
 from cmlibs.zinc.field import Field
 from cmlibs.zinc.result import RESULT_OK
 
@@ -136,37 +138,3 @@ def determine_appropriate_glyph_size(region, coordinates):
         del fieldcache
 
     return glyph_width
-
-
-def write_to_buffer(region, resource_domain_type=None, field_names=None):
-    """
-    Write the contents of the given region to a buffer.
-    The content written to the buffer can be controlled with resource domain type and field names.
-
-    :param region: The Zinc Region to write the content from.
-    :param resource_domain_type: Should be either Field.DOMAIN_TYPE_DATAPOINTS or Field.DOMAIN_TYPE_NODES.
-    :param field_names: A list of field names to output.
-    :return: The buffer in bytes written from the region.
-    """
-    sir = region.createStreaminformationRegion()
-    srm = sir.createStreamresourceMemory()
-    if resource_domain_type is not None:
-        sir.setResourceDomainTypes(srm, resource_domain_type)
-    if field_names is not None:
-        sir.setFieldNames(field_names)
-    region.write(sir)
-    result, buffer = srm.getBuffer()
-    return buffer if result == RESULT_OK else None
-
-
-def read_from_buffer(region, buffer):
-    """
-    Read the given buffer into the given region.
-
-    :param region: A Zinc Region to read the buffer into.
-    :param buffer: A buffer of bytes.
-    :return: The result of the region read operation.
-    """
-    temp_sir = region.createStreaminformationRegion()
-    temp_sir.createStreamresourceMemoryBuffer(buffer)
-    return region.read(temp_sir)
