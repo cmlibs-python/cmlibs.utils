@@ -4,7 +4,7 @@ import unittest
 from cmlibs.utils.zinc.field import find_or_create_field_coordinates
 from cmlibs.utils.zinc.finiteelement import (
     create_element_from_node_identifiers, create_hermite_curve_elements, create_node_points, define_grid_field_on_mesh,
-    get_mesh_element_node_identifiers_maps)
+    get_mesh_element_node_identifier_maps)
 from cmlibs.utils.zinc.general import ChangeManager
 
 from cmlibs.zinc.context import Context
@@ -357,7 +357,7 @@ class ZincFiniteElementTestCase(unittest.TestCase):
             self.assertAlmostEqual(r, rv[n], delta=1.0E-12)
             self.assertEqual(s, sv[n])
 
-    def test_get_mesh_element_node_identifiers_map(self):
+    def test_get_mesh_element_node_identifier_maps(self):
         exf_file = get_test_resource_name('two_lines.exf')
         context = Context("test")
         region = context.createRegion()
@@ -366,7 +366,7 @@ class ZincFiniteElementTestCase(unittest.TestCase):
         fm = region.getFieldmodule()
         mesh = fm.findMeshByDimension(1)
         coordinates_field = fm.findFieldByName("coordinates")
-        element_id_to_node_ids, node_id_to_element_ids = get_mesh_element_node_identifiers_maps(mesh, coordinates_field)
+        element_id_to_node_ids, node_id_to_element_ids = get_mesh_element_node_identifier_maps(mesh, coordinates_field)
         self.assertEqual(element_id_to_node_ids, {1: [1, 2], 2: [2, 3]})
         self.assertEqual(node_id_to_element_ids, {1: [1], 2: [1, 2], 3: [2]})
 

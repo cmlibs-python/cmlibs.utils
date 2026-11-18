@@ -536,7 +536,7 @@ def get_element_node_identifiers_basis_order(element: Element, eft: Elementfield
     return node_identifiers
 
 
-def get_mesh_element_node_identifiers_maps(mesh, field):
+def get_mesh_element_node_identifier_maps(mesh, field):
     """
     Get maps from element id to node ids in basis order, and node ids to element ids for mesh,
     as used by the supplied field. Duplicate node ids are first removed from element node id lists.
