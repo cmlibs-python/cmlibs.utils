@@ -2,14 +2,13 @@
 Utilities for creating and working with Zinc Fields.
 """
 from cmlibs.utils.zinc.general import ChangeManager
+from cmlibs.utils.zinc.regionbufferio import region_read_from_buffer, region_write_to_buffer
 from cmlibs.zinc.element import Mesh
 from cmlibs.zinc.field import Field, FieldFiniteElement, FieldGroup, \
     FieldStoredMeshLocation
 from cmlibs.zinc.fieldmodule import Fieldmodule
 from cmlibs.zinc.node import Node
 from cmlibs.zinc.result import RESULT_OK, RESULT_WARNING_PART_DONE
-
-from cmlibs.utils.zinc.region import write_to_buffer, read_from_buffer
 
 
 def field_is_managed_coordinates(field_in: Field):
@@ -382,12 +381,12 @@ def create_field_finite_element_clone(source_field: Field, name: str, managed=Fa
         # Zinc needs a function to do this efficiently; currently serialise to string, replace field name and reload!
         source_name = source_field.getName()
         region = fieldmodule.getRegion()
-        buffer = write_to_buffer(region, field_names=[source_name])
+        buffer = region_write_to_buffer(region, field_names=[source_name])
         # small risk of modifying other text here:
         source_bytes = bytes(") " + source_name + ",", "utf-8")
         target_bytes = bytes(") " + name + ",", "utf-8")
         buffer = buffer.replace(source_bytes, target_bytes)
-        result = read_from_buffer(region, buffer)
+        result = region_read_from_buffer(region, buffer)
         assert result == RESULT_OK
     # note currently must have called endChange before field can be found
     field = fieldmodule.findFieldByName(name).castFiniteElement()
